@@ -862,6 +862,15 @@
       <button type="button" class="btn-secondary" id="changeMyPinBtn" style="width:100%;">暗証番号を変更</button>
     </div>
 
+    <div class="card">
+      <h2>プレミアムプラン</h2>
+      <p class="small-note" id="premiumStatusText">現在のプランを確認しています…</p>
+      <div id="premiumUpgradeButtons" style="display:none;">
+        <button type="button" class="btn-primary" id="upgradeMonthlyBtn" style="width:100%; margin-bottom:8px;">月額¥300でアップグレード</button>
+        <button type="button" class="btn-secondary" id="upgradeYearlyBtn" style="width:100%;">年額¥3,000でアップグレード（2ヶ月分お得）</button>
+      </div>
+    </div>
+
     <div class="card" data-admin-only style="display:none;">
       <h2>当事者の名前（精算の2人）</h2>
       <p class="small-note">負担割合などで表示される2人の名前です。管理者のみ変更できます。</p>
@@ -1280,6 +1289,7 @@ document.addEventListener("DOMContentLoaded",function(){setTimeout(function(){re
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
 /* ===================== SAFE STORAGE WRAPPER =====================
@@ -1699,6 +1709,7 @@ function boot(){
     if(!user){
       // サインアウト・別アカウントへの切替時、前の世帯の同期を止めてから状態を初期化する
       if(firebaseRef){ firebaseRef.off(); firebaseRef = null; }
+      if(premiumRef){ premiumRef.off(); premiumRef = null; }
       currentHouseholdId = null;
       DB_PATH = null;
       appStarted = false;
@@ -3853,12 +3864,53 @@ document.getElementById('f_date').value = todayStr();
   var _sp2=document.getElementById('settlePeriodEnd');if(_sp2)_sp2.value=todayStr().substring(0,7);
 })();
 
+/* ---- プレミアムプラン ---- */
+let premiumRef = null;
+function initPremiumSync(){
+  if(premiumRef){ premiumRef.off(); premiumRef = null; }
+  const statusEl = document.getElementById('premiumStatusText');
+  const buttonsEl = document.getElementById('premiumUpgradeButtons');
+  if(!currentHouseholdId || !window.firebase || !firebase.apps || !firebase.apps.length){
+    statusEl.textContent = 'クラウド同期が未設定のため、プレミアムプランはご利用いただけません。';
+    buttonsEl.style.display = 'none';
+    return;
+  }
+  premiumRef = firebase.database().ref('households/'+currentHouseholdId+'/premium');
+  premiumRef.on('value', snap=>{
+    const p = snap.val();
+    if(p && p.active){
+      const planLabel = p.plan === 'yearly' ? '年額' : '月額';
+      statusEl.textContent = `プレミアム会員です（${planLabel}プラン）。ご利用ありがとうございます。`;
+      buttonsEl.style.display = 'none';
+    } else {
+      statusEl.textContent = '現在は無料プランです。アップグレードすると全機能が使えます。';
+      buttonsEl.style.display = 'block';
+    }
+  });
+}
+
+async function startUpgrade(plan){
+  const statusEl = document.getElementById('premiumStatusText');
+  try{
+    statusEl.textContent = '決済ページを準備しています…';
+    const fn = firebase.functions().httpsCallable('createCheckoutSession');
+    const res = await fn({ plan });
+    location.href = res.data.url;
+  }catch(e){
+    console.error('checkout session error', e);
+    statusEl.textContent = '決済ページの準備に失敗しました。時間をおいて再度お試しください。';
+  }
+}
+document.getElementById('upgradeMonthlyBtn').addEventListener('click', ()=>startUpgrade('monthly'));
+document.getElementById('upgradeYearlyBtn').addEventListener('click', ()=>startUpgrade('yearly'));
+
 function initApp(){
   const createdDefaults = ensureDefaultUsers();
   syncCurrentParty();
   refreshAll();
   initFirebaseSync();
   initEmailJS();
+  initPremiumSync();
   if(createdDefaults) save();
   if(currentUserId && getCurrentUserRecord()){
     hideLogin();
