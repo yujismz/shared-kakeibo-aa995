@@ -1,0 +1,3875 @@
+<!DOCTYPE html>
+<!-- APP_META: id=shared-payment-saas; name=揉めない家計簿（販売版）; version=v1.0; updated=2026-07-19 -->
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>揉めない家計簿</title>
+<style>
+  :root{
+    --bg: #faf6ef;
+    --paper: #ffffff;
+    --ink: #2e2a24;
+    --sub: #8a8275;
+    --line: #e7ddc9;
+    --yuji: #2f6f6a;
+    --yuji-soft: #e3f1ee;
+    --mika: #b85c3c;
+    --mika-soft: #fbe9e1;
+    --accent: #c79a3a;
+    --danger: #b3463c;
+    --shadow: 0 2px 10px rgba(60,50,30,0.07);
+    --radius: 14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Hiragino Sans","Yu Gothic",-apple-system,BlinkMacSystemFont,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:90px;
+  }
+  header{
+    position:sticky; top:0; z-index:20;
+    background:linear-gradient(180deg, #fffdf8 0%, #faf6ef 100%);
+    border-bottom:1px solid var(--line);
+    padding:14px 16px 0 16px;
+  }
+  .title-row{
+    display:flex; align-items:baseline; justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .title-row h1{
+    font-size:18px; margin:0; font-weight:700; letter-spacing:0.02em;
+  }
+  .title-row .names{
+    font-size:12px; color:var(--sub);
+  }
+  .names b.y{color:var(--yuji);}
+  .names b.m{color:var(--mika);}
+  nav.tabs{
+    display:flex; gap:4px; overflow-x:auto;
+    padding-bottom:0;
+  }
+  nav.tabs button{
+    flex:1; min-width:74px;
+    background:none; border:none;
+    font-size:13px; font-weight:600;
+    color:var(--sub);
+    padding:10px 6px 12px;
+    border-bottom:2px solid transparent;
+    white-space:nowrap;
+  }
+  nav.tabs button.active{
+    color:var(--ink);
+    border-bottom:2px solid var(--accent);
+  }
+  main{ padding:14px 14px 10px; max-width:680px; margin:0 auto; }
+  .card{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:16px;
+    margin-bottom:14px;
+  }
+  .card h2{
+    font-size:14px; margin:0 0 12px; color:var(--ink);
+    display:flex; align-items:center; gap:6px;
+  }
+  .balance-banner{
+    border-radius:var(--radius);
+    padding:18px 16px;
+    color:#fff;
+    margin-bottom:14px;
+    box-shadow:var(--shadow);
+    background: linear-gradient(135deg, var(--yuji), #234f4b);
+    transition:background 0.3s;
+  }
+  .balance-banner.mika-owes{ background: linear-gradient(135deg, var(--yuji), #234f4b); }
+  .balance-banner.yuji-owes{ background: linear-gradient(135deg, var(--mika), #8a3f28); }
+  .balance-banner.flat{ background: linear-gradient(135deg, #6b6358, #4a443b); }
+  .balance-banner .label{ font-size:12px; opacity:0.85; margin-bottom:4px; }
+  .balance-banner .amount{ font-size:30px; font-weight:700; letter-spacing:0.01em; }
+  .balance-banner .sub{ font-size:12px; opacity:0.85; margin-top:6px; }
+  .balance-banner button{
+    margin-top:12px;
+    background:rgba(255,255,255,0.18);
+    border:1px solid rgba(255,255,255,0.5);
+    color:#fff;
+    padding:7px 14px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:600;
+  }
+  .field{ margin-bottom:12px; }
+  .field label{
+    display:block; font-size:12px; color:var(--sub); margin-bottom:5px; font-weight:600;
+  }
+  .field input, .field select, .field textarea{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    font-size:15px;
+    background:#fffdf9;
+    color:var(--ink);
+    font-family:inherit;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{
+    outline:none; border-color:var(--accent);
+  }
+  .row2{ display:flex; gap:10px; }
+  .row2 > .field{ flex:1; min-width:0; }
+  .split-quick{ display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;}
+  .split-quick button{
+    font-size:11px; padding:5px 9px; border-radius:8px;
+    border:1px solid var(--line); background:#fff; color:var(--sub);
+  }
+  .split-quick button:active{ background:var(--accent); color:#fff; }
+  .amt-yuji input{ border-color:#bcdbd6; }
+  .amt-mika input{ border-color:#ecc9b8; }
+  .btn-primary{
+    width:100%;
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    padding:13px;
+    border-radius:10px;
+    font-size:15px;
+    font-weight:700;
+    letter-spacing:0.02em;
+  }
+  .btn-primary:active{ opacity:0.85; }
+  .btn-secondary{
+    background:none; border:1px solid var(--line); color:var(--sub);
+    padding:8px 12px; border-radius:10px; font-size:13px; font-weight:600;
+  }
+  .add-toggle{
+    display:flex; gap:6px; margin-top:-2px;
+  }
+  .add-toggle input{ flex:1; }
+  .add-toggle button{
+    border:1px solid var(--accent); background:#fff; color:var(--accent);
+    border-radius:10px; padding:0 14px; font-size:13px; font-weight:700;
+  }
+  .entry{
+    border-bottom:1px solid var(--line);
+    padding:11px 0;
+    display:flex; flex-direction:column; gap:5px;
+  }
+  .entry:last-child{ border-bottom:none; }
+  .entry-head{ display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .entry-head .date{
+    font-size:11px; color:var(--sub); flex-shrink:0; white-space:nowrap;
+  }
+  .entry .body{ min-width:0; }
+  .entry .item-name{ font-size:14px; font-weight:600; word-break:break-word; flex:1; min-width:100px; }
+  .entry .tags{ margin-top:3px; display:flex; gap:5px; flex-wrap:wrap; }
+  .tag{
+    font-size:10px; padding:2px 7px; border-radius:7px; background:#f1ece0; color:var(--sub);
+  }
+  .entry .nums{ text-align:left; font-size:12px; width:100%; }
+  .entry .nums .total{ font-weight:700; font-size:14px; }
+  .entry .nums .split{ color:var(--sub); margin-top:2px; }
+  .entry .nums .split .y{ color:var(--yuji); font-weight:600; }
+  .entry .nums .split .m{ color:var(--mika); font-weight:600; }
+  .entry .nums .paid-line{ color:var(--sub); margin-top:3px; font-size:11px; white-space:nowrap; }
+  .mini-bar{
+    display:flex; height:7px; border-radius:4px; overflow:hidden; margin-top:5px;
+    width:100%; box-shadow:inset 0 0 0 1px var(--line);
+  }
+  .mini-bar .mb-y{ background:#2f6fb0; height:100%; }
+  .mini-bar .mb-m{ background:#c0392b; height:100%; }
+  .row-diff{ margin-top:4px; font-size:11px; font-weight:700; }
+  .row-diff.to-yuji{ color:var(--mika); }
+  .row-diff.to-mika{ color:var(--yuji); }
+  .entry-actions{ display:flex; gap:4px; }
+  .icon-btn{
+    background:none; border:none; color:var(--sub); font-size:15px; padding:4px;
+  }
+  .empty-state{ text-align:center; color:var(--sub); font-size:13px; padding:30px 10px; }
+  .totals-strip{
+    display:flex; gap:10px; margin-top:10px; padding-top:10px; border-top:1px solid var(--line);
+  }
+  .totals-strip > div{ flex:1; text-align:center; }
+  .totals-strip .num{ font-size:16px; font-weight:700; }
+  .totals-strip .lbl{ font-size:11px; color:var(--sub); margin-top:2px;}
+  .fixed-item{
+    border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:10px; background:#fffdf9;
+  }
+  .fixed-item .top{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .fixed-item .name{ font-weight:700; font-size:14px; }
+  .fixed-item .plan{ font-size:11px; color:var(--sub); margin-top:2px; }
+  .fixed-item .amount{ font-size:15px; font-weight:700; white-space:nowrap; }
+  .fixed-item .split-line{ font-size:11px; color:var(--sub); margin-top:4px; }
+  .month-row{
+    display:flex; align-items:center; gap:8px; margin-top:8px; padding-top:8px; border-top:1px dashed var(--line);
+    flex-wrap:wrap;
+  }
+  .month-row select.ym{ font-size:13px; padding:6px 8px; border-radius:8px; border:1px solid var(--line); }
+  .status-pill{
+    font-size:11px; padding:5px 10px; border-radius:20px; font-weight:700; border:none;
+  }
+  .status-pill.due{ background:#f1ece0; color:var(--sub); }
+  .status-pill.paid{ background:var(--yuji-soft); color:var(--yuji); }
+  .month-history{ font-size:11px; color:var(--sub); margin-top:6px; }
+  .month-history span{ display:inline-block; margin-right:8px; }
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(30,25,15,0.4); z-index:50;
+    display:none; align-items:flex-end; justify-content:center;
+  }
+  .modal-overlay.open{ display:flex; }
+  .modal{
+    background:var(--paper); border-radius:18px 18px 0 0; width:100%; max-width:680px;
+    max-height:88vh; overflow-y:auto; padding:18px 16px 28px;
+    animation:slideup 0.2s ease-out;
+  }
+  @keyframes slideup{ from{transform:translateY(20px); opacity:0;} to{transform:translateY(0); opacity:1;} }
+  .modal h3{ margin:0 0 14px; font-size:15px; }
+  .small-note{ font-size:11px; color:var(--sub); margin-top:-4px; margin-bottom:10px; line-height:1.5;}
+  .delete-link{ color:var(--danger); font-size:12px; background:none; border:none; padding:4px; }
+  .settle-list .entry .item-name{ font-weight:600; }
+  .chip-row{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+  .chip{
+    font-size:11px; padding:5px 10px; border-radius:14px; border:1px solid var(--line); background:#fff; color:var(--sub);
+  }
+  .fab-space{ height:8px; }
+  footer.note{
+    text-align:center; font-size:11px; color:var(--sub); padding:18px 20px 6px; line-height:1.6;
+  }
+  /* --- ratio confirm / summary additions --- */
+  .ratio-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:9px 0; border-bottom:1px solid var(--line);
+  }
+  .ratio-row:last-child{ border-bottom:none; }
+  .ratio-row .rname{ font-size:13px; font-weight:600; flex:1; min-width:0; }
+  .ratio-row .rinputs{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--sub); flex-shrink:0; }
+  .ratio-row input.ratio-pct{
+    width:52px; text-align:center; padding:6px 4px; border:1px solid var(--line); border-radius:8px; font-size:13px;
+  }
+  .confirm-btn{
+    font-size:11px; font-weight:700; border:none; border-radius:14px;
+    padding:6px 11px; flex-shrink:0; color:#fff;
+  }
+  .confirm-btn.pending{ background:var(--danger); }
+  .confirm-btn.waiting{ background:#9c958a; }
+  .confirm-btn.done{ background:#3f8f5f; }
+  .entry-row-wrap{
+    display:flex; align-items:center; gap:8px; border-bottom:1px solid var(--line); padding:11px 0;
+  }
+  .entry-row-wrap:last-child{ border-bottom:none; }
+  .entry-row-wrap .entry{ border-bottom:none; padding:0; flex:1; cursor:pointer; }
+  .summary-card .period-select{ margin-bottom:10px; }
+  .summary-grid{ display:flex; gap:8px; flex-wrap:wrap; }
+  .summary-grid .box{
+    flex:1; min-width:90px; background:#fffdf9; border:1px solid var(--line); border-radius:10px; padding:10px; text-align:center;
+  }
+  .summary-grid .box .v{ font-size:15px; font-weight:700; }
+  .summary-grid .box .p{ font-size:11px; color:var(--sub); margin-top:2px; }
+  .summary-grid .box.y .v{ color:var(--yuji); }
+  .summary-grid .box.m .v{ color:var(--mika); }
+  .unsettled-strip{
+    margin-top:10px; padding:10px 12px; border-radius:10px; background:#fbe9e1; font-size:12px; color:var(--mika); font-weight:600;
+    display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;
+  }
+  .unsettled-strip.zero{ background:#f1ece0; color:var(--sub); }
+  .excluded-strip{
+    margin-top:6px; padding:9px 12px; border-radius:10px; background:#efece4; color:var(--sub);
+    font-size:11px; font-weight:600;
+  }
+  .recent-btn-row{ margin-top:10px; }
+  .ratio-slider-row{ display:flex; align-items:center; gap:10px; margin:10px 0; }
+  .ratio-slider-row input[type=range]{ flex:1; }
+  .ratio-display{ font-size:13px; font-weight:700; white-space:nowrap; }
+  .ratio-display .y{ color:var(--yuji); }
+  .ratio-display .m{ color:var(--mika); }
+
+  /* --- draggable ratio bar --- */
+  .ratio-bar-wrap{ margin:12px 0 6px; }
+  .ratio-bar{
+    position:relative; height:40px; border-radius:10px; overflow:hidden;
+    background:#eee; touch-action:none; cursor:grab; user-select:none;
+    box-shadow:inset 0 0 0 1px var(--line);
+  }
+  .ratio-bar.locked{ cursor:not-allowed; opacity:0.6; }
+  .ratio-bar .seg-y{
+    position:absolute; left:0; top:0; height:100%; background:#2f6fb0;
+    display:flex; align-items:center; justify-content:flex-start; padding-left:10px;
+    color:#fff; font-size:12px; font-weight:700; white-space:nowrap; overflow:hidden;
+  }
+  .ratio-bar .seg-m{
+    position:absolute; right:0; top:0; height:100%; background:#c0392b;
+    display:flex; align-items:center; justify-content:flex-end; padding-right:10px;
+    color:#fff; font-size:12px; font-weight:700; white-space:nowrap; overflow:hidden;
+  }
+  .ratio-bar .handle{
+    position:absolute; top:0; bottom:0; width:14px; margin-left:-7px;
+    background:#fff; border:2px solid #555; border-radius:4px;
+    box-shadow:0 1px 3px rgba(0,0,0,0.3);
+  }
+  .ratio-bar-pcts{ display:flex; justify-content:space-between; font-size:11px; color:var(--sub); margin-top:5px; }
+  .ratio-bar-pcts .y{ color:var(--yuji); font-weight:700; }
+  .ratio-bar-pcts .m{ color:var(--mika); font-weight:700; }
+  .confirm-lock-note{
+    background:#fbe9e1; color:var(--mika); font-size:12px; font-weight:600;
+    padding:9px 11px; border-radius:10px; margin:10px 0; line-height:1.5;
+  }
+  .confirm-lock-note.ok{ background:#e3f1ee; color:var(--yuji); }
+  .btn-primary[disabled]{ opacity:0.4; }
+  .diff-note{
+    margin:12px 0; padding:11px 13px; border-radius:10px; font-size:13px; font-weight:700;
+    background:#f1ece0; color:var(--sub); text-align:center;
+  }
+  .diff-note.to-yuji{ background:var(--mika-soft); color:var(--mika); }
+  .diff-note.to-mika{ background:var(--yuji-soft); color:var(--yuji); }
+  .exclude-checkbox{
+    display:flex; align-items:flex-start; gap:8px; font-size:12px; color:var(--sub);
+    margin:10px 0 16px; line-height:1.5; cursor:pointer;
+  }
+  .exclude-checkbox input{ margin-top:2px; flex-shrink:0; }
+  .entry-row-wrap.excluded-row{ opacity:0.55; }
+  .entry-row-wrap.settled-row{ opacity:0.8; }
+  .excluded-tag{ background:#e8e3d6; color:var(--sub); }
+  .settled-tag{ background:var(--yuji-soft); color:var(--yuji); }
+  .exclude-btn{
+    font-size:11px; font-weight:700; border-radius:14px; padding:6px 10px; flex-shrink:0;
+    border:1px solid var(--line); background:#fff; color:var(--sub);
+  }
+  .exclude-btn.active{ background:#9c958a; color:#fff; border-color:#9c958a; }
+  .entry-row-btns{ display:flex; flex-direction:column; gap:5px; align-items:stretch; }
+  .link-toggle{
+    background:none; border:none; color:var(--accent); font-size:12px; font-weight:600;
+    padding:6px 0; margin-bottom:6px; text-align:left;
+  }
+
+  /* --- login overlay --- */
+  #loginOverlay{
+    position:fixed; inset:0; background:var(--bg); z-index:100;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  #loginOverlay.hidden{ display:none; }
+  #accountOverlay{
+    position:fixed; inset:0; background:var(--bg); z-index:110;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  #accountOverlay.hidden{ display:none; }
+  #householdSetupOverlay{
+    position:fixed; inset:0; background:var(--bg); z-index:105;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  #householdSetupOverlay.hidden{ display:none; }
+  .invite-link-box{ display:flex; gap:6px; margin:10px 0; }
+  .invite-link-box input{
+    flex:1; padding:10px; border:1px solid var(--line); border-radius:8px; font-size:12px; color:var(--sub);
+  }
+  .login-box{
+    background:var(--paper); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:24px 20px; width:100%; max-width:360px;
+  }
+  .login-box h2{ font-size:16px; margin:0 0 4px; text-align:center; }
+  .login-box .sub{ font-size:12px; color:var(--sub); text-align:center; margin-bottom:18px; }
+  .role-toggle{ display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .role-toggle button{
+    flex:1; padding:14px 8px; border-radius:12px; border:2px solid var(--line);
+    background:#fff; font-size:14px; font-weight:700; color:var(--sub);
+  }
+  .role-toggle button.sel-yuji{ border-color:var(--yuji); color:var(--yuji); background:var(--yuji-soft); }
+  .role-toggle button.sel-mika{ border-color:var(--mika); color:var(--mika); background:var(--mika-soft); }
+  .role-toggle button.sel-admin{ border-color:var(--accent); color:var(--accent); background:#fdf3e0; }
+  .login-box input[type=password], .login-box input[type=tel]{
+    width:100%; padding:12px; border:1px solid var(--line); border-radius:10px;
+    font-size:18px; text-align:center; letter-spacing:0.3em; margin-bottom:10px;
+  }
+  .biometric-btn{
+    width:100%; background:#fff; border:1px solid var(--accent); color:var(--accent);
+    padding:11px; border-radius:10px; font-size:13px; font-weight:700; margin-top:8px;
+  }
+  .login-error{ color:var(--danger); font-size:12px; text-align:center; margin:6px 0; min-height:14px; }
+  .header-user{
+    display:flex; align-items:center; gap:6px; font-size:11px; color:var(--sub);
+  }
+  .header-user button{ background:none; border:none; color:var(--sub); font-size:11px; text-decoration:underline; padding:2px; }
+  .header-user .me{ font-weight:700; }
+  .header-user .me.yuji{ color:var(--yuji); }
+  .header-user .me.mika{ color:var(--mika); }
+  .sync-status{ font-size:10px; padding:2px 7px; border-radius:8px; background:#f1ece0; color:var(--sub); }
+  .sync-status.ok{ background:var(--yuji-soft); color:var(--yuji); }
+  .sync-status.warn{ background:#fbe9e1; color:var(--mika); }
+
+  .tile-period-wrap{display:none;margin-bottom:12px;}
+  .tile-period-wrap.active{display:block;}
+  .tile-actions{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:center;}
+  .tile-action-btn{font-size:12px;font-weight:600;padding:6px 14px;border-radius:8px;border:none;cursor:pointer;
+    background:#e0e0e0;color:#444;
+    box-shadow:2px 2px 0 rgba(0,0,0,0.18),inset 0 1px 0 rgba(255,255,255,0.4);transition:all 0.1s;}
+  .tile-action-btn:active{box-shadow:0 0 0,inset 0 2px 4px rgba(0,0,0,0.18);transform:translateY(2px);}
+  .tile-grid{display:flex;flex-wrap:wrap;gap:6px;}
+  .tile-month{padding:8px 10px;border-radius:10px;font-size:12px;font-weight:700;
+    cursor:pointer;user-select:none;border:none;
+    box-shadow:2px 2px 0 rgba(0,0,0,0.15),inset 0 1px 0 rgba(255,255,255,0.35);transition:all 0.1s;}
+  .tile-month:active{box-shadow:0 0,inset 0 2px 4px rgba(0,0,0,0.15);transform:translateY(2px);}
+  .tile-month.settled{background:#c8c8c8;color:#888;cursor:not-allowed;box-shadow:none;opacity:0.7;}
+  .tile-month.unsettled{background:#fde8e8;color:#b71c1c;}
+  .tile-month.selected{background:#56c77a;color:#fff;box-shadow:2px 2px 0 rgba(0,100,0,0.25),inset 0 1px 0 rgba(255,255,255,0.3);}
+  .balance-banner.period-sel{background:linear-gradient(135deg,#43a85a,#56c77a)!important;}
+  .balance-banner.period-sel .label,.balance-banner.period-sel .sub{color:rgba(255,255,255,0.85)!important;}
+  .balance-banner.period-sel .amount{color:#fff!important;}
+  .help-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;overflow-y:auto;padding:20px 12px;}
+  .help-overlay.open{display:flex;align-items:flex-start;justify-content:center;}
+  .help-box{background:#fff;border-radius:16px;max-width:500px;width:100%;padding:20px;box-shadow:0 8px 30px rgba(0,0,0,0.2);}
+  .help-box h2{font-size:16px;margin:0 0 14px;}
+  .help-box h3{font-size:13px;margin:14px 0 6px;color:#444;border-bottom:1px solid #eee;padding-bottom:4px;}
+  .help-box li{font-size:13px;line-height:1.7;color:#555;margin-bottom:4px;}
+  .help-box ul{padding-left:18px;margin:4px 0;}
+  .help-close{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:#888;}
+
+
+  .pill-pending{ background:#fff3cd; color:#856404; border:1px solid #ffc107; }
+  .pill-paid-both{ background:#d1fae5; color:#065f46; border:1px solid #34d399; }
+  .pill-due{ background:#fee2e2; color:#991b1b; border:1px solid #f87171; }
+
+
+
+  .tile-mo{padding:7px 10px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;user-select:none;border:none;box-shadow:2px 2px 0 rgba(0,0,0,0.12);transition:all 0.1s;}
+  .tile-mo:active{box-shadow:0 0;transform:translateY(2px);}
+  .tile-mo.settled{background:#d0d0d0;color:#888;cursor:not-allowed;box-shadow:none;opacity:0.6;}
+  .tile-mo.unsettled{background:#fde8e8;color:#b71c1c;}
+  .tile-mo.selected{background:#56c77a;color:#fff;}
+</style>
+</head>
+<body>
+<div class="help-overlay" id="helpOverlay">
+  <div class="help-box">
+    <button class="help-close" onclick="document.getElementById('helpOverlay').classList.remove('open')">&#x2715;</button>
+    <h2>&#x1F4D8; 使い方ガイド</h2>
+    <h3>&#x1F4B0; 支払い記録</h3>
+    <ul>
+      <li>2人の共同支払いを記録します。</li>
+      <li>総計・先払い者・負担割合を入力すると差額を自動計算します。</li>
+      <li>「共同除外」にすると精算の対象外になります。</li>
+    </ul>
+    <h3>&#x1F4C5; 毎月の定額</h3>
+    <ul>
+      <li>毎月発生する固定費を登録します。</li>
+      <li>支払済みの月はチェックを入れて記録します。</li>
+    </ul>
+    <h3>&#x2696;&#xFE0F; 精算</h3>
+    <ul>
+      <li>期間を選択して差額を確認し、精算申請ができます。</li>
+      <li><strong>両ユーザーが確認</strong>して初めて精算完了になります。</li>
+      <li>タイル表示で期間を選択できます（設定から切替可能）。</li>
+    </ul>
+    <h3>&#x2699;&#xFE0F; 設定</h3>
+    <ul>
+      <li>名前・メール・暗証番号を変更できます。</li>
+      <li>差額表示の期間選択方式（年月入力 / タイル表示）を切り替えられます。</li>
+    </ul>
+  </div>
+</div>
+
+
+<div id="accountOverlay" class="hidden">
+  <div class="login-box">
+    <h2>揉めない家計簿</h2>
+    <div class="sub" id="accountModeSub">メールアドレスでログイン</div>
+    <div class="field">
+      <label>メールアドレス</label>
+      <input type="email" id="acc_email" autocomplete="email" placeholder="example@mail.com">
+    </div>
+    <div class="field">
+      <label>パスワード（6文字以上）</label>
+      <input type="password" id="acc_password" autocomplete="current-password">
+    </div>
+    <div class="login-error" id="accountError"></div>
+    <button type="button" class="btn-primary" id="accountSubmitBtn">ログイン</button>
+    <button type="button" class="link-toggle" id="accountModeToggle" style="display:block; text-align:center; margin-top:10px;">アカウントをお持ちでない方はこちら（新規登録）</button>
+  </div>
+</div>
+
+<div id="householdSetupOverlay" class="hidden">
+  <div class="login-box">
+    <h2>揉めない家計簿</h2>
+    <div class="sub">はじめに、家計を作成／参加してください</div>
+    <div id="hh_createStep">
+      <p class="small-note">新しく家計を作成します。作成後、パートナーを招待するリンクが発行されます。</p>
+      <button type="button" class="btn-primary" id="hh_createBtn">新しい家計を作る</button>
+    </div>
+    <div id="hh_inviteStep" style="display:none; margin-top:16px;">
+      <p class="small-note">このリンクをパートナーに送ってください。開くだけで自動的に同じ家計に参加できます。</p>
+      <div class="invite-link-box">
+        <input type="text" id="hh_inviteLinkInput" readonly>
+        <button type="button" class="btn-secondary" id="hh_copyInviteBtn">コピー</button>
+      </div>
+      <button type="button" class="btn-primary" id="hh_inviteDoneBtn" style="margin-top:10px;">はじめる</button>
+    </div>
+    <div id="hh_joiningStep" style="display:none;">
+      <p class="small-note">招待された家計に参加しています…</p>
+    </div>
+    <div class="login-error" id="hh_error"></div>
+    <button type="button" class="link-toggle" id="accountSignOutBtn" style="display:block; text-align:center; margin-top:14px;">別のアカウントでログインし直す</button>
+  </div>
+</div>
+
+<div id="loginOverlay" class="hidden">
+  <div class="login-box">
+    <h2>揉めない家計簿</h2>
+    <div class="sub">ログインする人を選んでください</div>
+    <div class="role-toggle" id="userToggle"></div>
+    <input type="password" id="loginPin" inputmode="numeric" maxlength="8" placeholder="暗証番号（4〜8桁）">
+    <div class="login-error" id="loginError"></div>
+    <button type="button" class="btn-primary" id="loginBtn">ログイン</button>
+    <button type="button" class="biometric-btn" id="biometricBtn" style="display:none;">指紋・顔認証でログイン</button>
+    <p class="small-note" id="biometricNote" style="display:none; margin-top:8px; text-align:center;"></p>
+    <p class="small-note" id="loginHint" style="margin-top:14px; text-align:center;"></p>
+    <button type="button" class="link-toggle" id="forgotPinLink" style="display:block; text-align:center; margin-top:6px;">暗証番号を忘れた場合はこちら</button>
+  </div>
+</div>
+
+<!-- ===== Forgot PIN Modal ===== -->
+<div class="modal-overlay" id="forgotPinModalOverlay">
+  <div class="modal">
+    <h3>暗証番号の再設定</h3>
+    <div id="forgotPinStep1">
+      <p class="small-note">登録されているメールアドレスに確認コードを送ります。</p>
+      <div class="field">
+        <label>ユーザー</label>
+        <select id="fp_user"></select>
+      </div>
+      <button type="button" class="btn-primary" id="fp_sendCodeBtn">確認コードを送信</button>
+    </div>
+    <div id="forgotPinStep2" style="display:none;">
+      <p class="small-note" id="fp_sentNote"></p>
+      <div class="field">
+        <label>確認コード（6桁）</label>
+        <input type="text" id="fp_code" inputmode="numeric" maxlength="6" placeholder="123456">
+      </div>
+      <div class="field">
+        <label>新しい暗証番号（4〜8桁）</label>
+        <input type="password" id="fp_newPin" inputmode="numeric" maxlength="8">
+      </div>
+      <div class="login-error" id="fp_error"></div>
+      <button type="button" class="btn-primary" id="fp_confirmBtn">暗証番号を再設定する</button>
+    </div>
+    <button type="button" class="btn-secondary" id="fp_cancelBtn" style="width:100%; margin-top:10px;">閉じる</button>
+  </div>
+</div>
+
+<header>
+  <div class="title-row">
+    <h1>揉めない家計簿</h1>
+    <div class="header-user">
+      <span id="syncStatus" class="sync-status"></span>
+      <span>ログイン中：</span><span class="me" id="headerMe"></span>
+      <button type="button" id="logoutBtn">切替</button>
+    </div>
+    <button onclick="document.getElementById('helpOverlay').classList.add('open')" style="position:absolute;right:0;top:2px;background:none;border:none;cursor:pointer;font-size:18px;padding:2px 6px;">&#x2753;</button>
+</div>
+  <nav class="tabs">
+    <button class="active" data-tab="entries">支払い記録</button>
+    <button data-tab="fixed">毎月の定額</button>
+    <button data-tab="settle">精算</button>
+    <button data-tab="settings">項目設定</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ===== TAB: ENTRIES ===== -->
+  <section id="tab-entries">
+    <div id="balanceBanner" class="balance-banner flat">
+      <div class="label">現在の精算額</div>
+      <div class="amount" id="balanceAmount">¥0</div>
+      <div class="sub" id="balanceSub">記録なし</div>
+    </div>
+
+    
+    <div class="tile-period-wrap" id="tilePeriodWrap">
+      <div class="tile-actions">
+        <button class="tile-action-btn" onclick="selectAllTiles()">全選択</button>
+        <button class="tile-action-btn" onclick="deselectAllTiles()">全解除</button>
+        <span id="tileInfo" style="font-size:12px;color:#666;margin-left:4px;"></span>
+      </div>
+      <div class="tile-grid" id="tileGrid"></div>
+    </div>
+
+    <div class="card summary-card">
+      <h2>負担額の概要</h2>
+      <select id="summaryPeriod" class="period-select"></select>
+      <div class="summary-grid">
+        <div class="box"><div class="v" id="sumTotal">¥0</div><div class="p">総計</div></div>
+        <div class="box y"><div class="v" id="sumYuji">¥0</div><div class="p" id="sumYujiPct">勇治分担 0%</div></div>
+        <div class="box m"><div class="v" id="sumMika">¥0</div><div class="p" id="sumMikaPct">美香分担 0%</div></div>
+      </div>
+      <div class="unsettled-strip zero" id="unsettledStrip">未精算金額（割合確定による差分）：¥0／未確認の項目：0件</div>
+      <div class="unsettled-strip zero" id="diffStrip" style="margin-top:6px;">肩代わり額との差額合計：¥0</div>
+      <div class="excluded-strip" id="excludedStrip" style="display:none;"></div>
+      <div class="recent-btn-row">
+        <button type="button" class="btn-secondary" id="recentItemsBtn" style="width:100%;">最近追加された項目を確認</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>新しい支払いを記録</h2>
+      <form id="entryForm">
+        <div class="row2">
+          <div class="field">
+            <label>支払日</label>
+            <input type="date" id="f_date" required>
+          </div>
+          <div class="field">
+            <label>カテゴリ</label>
+            <select id="f_category"></select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>対象者（任意）</label>
+          <select id="f_person"></select>
+        </div>
+
+        <div class="field">
+          <label>項目名</label>
+          <input type="text" id="f_item" list="itemList" placeholder="例：通学定期券" required>
+          <datalist id="itemList"></datalist>
+        </div>
+
+        <div class="field">
+          <label>① 総計金額（円）</label>
+          <input type="number" id="f_total" inputmode="numeric" placeholder="0">
+        </div>
+
+        <div class="small-note" style="margin-top:-4px;">② 先払いしたのはどちら？</div>
+        <div class="role-toggle" id="f_paid_toggle">
+          <button type="button" data-paidwho="yuji">勇治が先払い</button>
+          <button type="button" data-paidwho="mika">美香が先払い</button>
+        </div>
+        <button type="button" class="link-toggle" id="f_paid_detail_toggle">金額を個別に指定する（折半で立て替えた場合など）▾</button>
+        <div id="f_paid_detail" style="display:none;">
+          <div class="row2">
+            <div class="field amt-yuji">
+              <label>勇治が支払った額</label>
+              <input type="number" id="f_paid_yuji" inputmode="numeric" placeholder="0">
+            </div>
+            <div class="field amt-mika">
+              <label>美香が支払った額</label>
+              <input type="number" id="f_paid_mika" inputmode="numeric" placeholder="0">
+            </div>
+          </div>
+          <div class="split-quick">
+            <button type="button" data-paid="yuji100">勇治が全額立て替え</button>
+            <button type="button" data-paid="mika100">美香が全額立て替え</button>
+            <button type="button" data-paid="half">折半で立て替え</button>
+          </div>
+        </div>
+
+        <div class="small-note" style="margin-top:14px;">③ 精算するときの負担割合（ここでドラッグして調整）</div>
+        <div class="row2">
+          <div class="field amt-yuji">
+            <label>勇治の負担額</label>
+            <input type="number" id="f_yuji" inputmode="numeric" placeholder="0">
+          </div>
+          <div class="field amt-mika">
+            <label>美香の負担額</label>
+            <input type="number" id="f_mika" inputmode="numeric" placeholder="0">
+          </div>
+        </div>
+        <div class="small-note" id="f_ratio_hint" style="margin-top:-4px;">カテゴリを選ぶと、設定したデフォルトの分担割合が自動で入ります。</div>
+        <div class="split-quick">
+          <button type="button" data-split="yuji100">勇治が全額負担</button>
+          <button type="button" data-split="mika100">美香が全額負担</button>
+          <button type="button" data-split="half">半分ずつ</button>
+          <button type="button" data-split="catdefault">カテゴリの規定割合</button>
+        </div>
+        <div class="ratio-bar-wrap">
+          <div class="ratio-bar" id="f_ratio_bar">
+            <div class="seg-y" id="f_bar_y">勇治</div>
+            <div class="seg-m" id="f_bar_m">美香</div>
+            <div class="handle" id="f_bar_handle"></div>
+          </div>
+          <div class="ratio-bar-pcts"><span class="y" id="f_bar_y_pct">勇治 0%</span><span class="m" id="f_bar_m_pct">美香 0%</span></div>
+        </div>
+
+        <div class="diff-note" id="f_diff_note">差額なし</div>
+
+        <div class="field" style="margin-top:12px;">
+          <label>メモ（任意）</label>
+          <input type="text" id="f_memo" placeholder="補足があれば">
+        </div>
+
+        <label class="exclude-checkbox">
+          <input type="checkbox" id="f_excluded">
+          <span>この支払いは共同の精算対象から除外する（参考記録としてのみ残す）</span>
+        </label>
+
+        <button type="submit" class="btn-primary">記録する</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>記録一覧</h2>
+      <div class="field" style="margin-bottom:10px;">
+        <select id="filterMonth"></select>
+      </div>
+      <div id="entryList"></div>
+      <div class="totals-strip" id="entryTotals"></div>
+    </div>
+  </section>
+
+  <!-- ===== TAB: FIXED ===== -->
+  <section id="tab-fixed" style="display:none;">
+    <div class="card">
+      <h2>毎月かかる定額費用</h2>
+      <div id="fixedList"></div>
+      <button class="btn-secondary" id="addFixedBtn" style="width:100%; margin-top:8px;">＋ 定額費用を追加</button>
+    </div>
+  </section>
+
+  <!-- ===== TAB: SETTLE ===== -->
+  <section id="tab-settle" style="display:none;">
+    <div id="balanceBanner2" class="balance-banner flat">
+      <div class="label">現在の精算額</div>
+      <div class="amount" id="balanceAmount2">¥0</div>
+      <div class="sub" id="balanceSub2">記録なし</div>
+    </div>
+
+    <div class="card">
+      <h2>期間で精算額を計算する</h2>
+      <p class="small-note">期間を指定すると、その間の「先払い額」と「負担額」の差分を精算額として計算します。両方が確認すると、対象の支払いは自動的に「精算完了」になります。</p>
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;gap:14px;margin-bottom:10px;">
+          <label style="font-size:13px;cursor:pointer;"><input type="radio" name="spm" value="c" onchange="spmMode(this.value)" checked> カレンダー</label>
+          <label style="font-size:13px;cursor:pointer;"><input type="radio" name="spm" value="t" onchange="spmMode(this.value)"> タイル</label>
+        </div>
+        <div id="sCalBar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <div class="field" style="flex:1;"><label>開始月</label><input type="month" id="settlePeriodStart" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;font-size:14px;"></div>
+          <div style="padding-top:20px;color:var(--sub);">〜</div>
+          <div class="field" style="flex:1;"><label>終了月</label><input type="month" id="settlePeriodEnd" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;font-size:14px;"></div>
+        </div>
+        <div id="sTileWrap" style="display:none;margin-top:8px;">
+          <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+            <button onclick="sTileAll()" style="font-size:12px;font-weight:600;padding:6px 14px;border-radius:8px;border:none;cursor:pointer;background:#e0e0e0;color:#444;">全選択</button>
+            <button onclick="sTileClr()" style="font-size:12px;font-weight:600;padding:6px 14px;border-radius:8px;border:none;cursor:pointer;background:#e0e0e0;color:#444;">全解除</button>
+            <span id="sTileInfo" style="font-size:12px;color:#666;margin-left:4px;"></span>
+          </div>
+          <div id="sTileGrid" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+        </div>
+      </div>
+      <button type="button" class="btn-secondary" id="calcSettlePeriodBtn" style="width:100%;">この期間で計算する</button>
+
+      <div id="settlePeriodPreview" style="display:none; margin-top:14px;">
+        <div class="summary-grid">
+          <div class="box"><div class="v" id="sp_total">¥0</div><div class="p" id="sp_count">対象0件</div></div>
+          <div class="box y"><div class="v" id="sp_paidYuji">¥0</div><div class="p">先払い：勇治</div></div>
+          <div class="box m"><div class="v" id="sp_paidMika">¥0</div><div class="p">先払い：美香</div></div>
+        </div>
+        <div class="summary-grid" style="margin-top:8px;">
+          <div class="box y"><div class="v" id="sp_burdenYuji">¥0</div><div class="p" id="sp_burdenYujiPct">負担：勇治</div></div>
+          <div class="box m"><div class="v" id="sp_burdenMika">¥0</div><div class="p" id="sp_burdenMikaPct">負担：美香</div></div>
+        </div>
+        <div class="diff-note" id="sp_diff_note" style="margin-top:10px;">差額なし</div>
+        <button type="button" class="btn-primary" id="requestSettlePeriodBtn" style="background:var(--danger); margin-top:6px;">この内容で精算完了を申請する</button>
+      </div>
+    </div>
+
+    <div class="card" id="pendingSettleCard" style="display:none;">
+      <h2>精算完了の確認待ち</h2>
+      <div id="pendingSettleInfo"></div>
+      <button type="button" class="btn-primary" id="confirmSettlePeriodBtn" style="background:#3f8f5f; margin-top:10px;">確認して精算完了にする</button>
+      <button type="button" class="btn-secondary" id="cancelSettlePeriodBtn" style="width:100%; margin-top:8px;">申請を取り消す</button>
+    </div>
+
+    <div class="card">
+      <h2>期間精算の履歴</h2>
+      <div id="settlePeriodHistory"></div>
+    </div>
+
+    <div class="card">
+      <h2>個別の精算を記録する</h2>
+      <p class="small-note">美香が勇治へお金を渡した（または逆に渡した）タイミングを記録すると、上の精算額に反映されます。</p>
+      <form id="settleForm">
+        <div class="row2">
+          <div class="field">
+            <label>日付</label>
+            <input type="date" id="s_date" required>
+          </div>
+          <div class="field">
+            <label>方向</label>
+            <select id="s_direction">
+              <option value="mika_to_yuji">美香 → 勇治</option>
+              <option value="yuji_to_mika">勇治 → 美香</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>金額（円）</label>
+          <input type="number" id="s_amount" inputmode="numeric" placeholder="0" required>
+        </div>
+        <div class="field">
+          <label>メモ（任意）</label>
+          <input type="text" id="s_memo" placeholder="例：1〜3月分まとめて">
+        </div>
+        <button type="submit" class="btn-primary">精算を記録</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>個別精算の履歴</h2>
+      <div id="settleList" class="settle-list"></div>
+    </div>
+  </section>
+
+  <!-- ===== TAB: SETTINGS ===== -->
+  <section id="tab-settings" style="display:none;">
+        <div class="card">
+      <h2>&#x2699;&#xFE0F; 差額表示の期間選択方式</h2>
+      <p class="small-note">トップページの差額表示で使う期間の選択方法を切り替えます。</p>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;">
+          <input type="radio" name="periodMode" value="input" onchange="savePeriodMode(this.value)"> 年月入力
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;">
+          <input type="radio" name="periodMode" value="tile" onchange="savePeriodMode(this.value)"> タイル表示
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>マイアカウント</h2>
+      <p class="small-note">ログイン中の自分の名前・メールアドレス・暗証番号を変更できます。</p>
+      <div class="field">
+        <label>名前</label>
+        <input type="text" id="my_name">
+      </div>
+      <div class="field">
+        <label>メールアドレス（パスワード再設定や通知に使用）</label>
+        <input type="email" id="my_email" placeholder="example@example.com">
+      </div>
+      <button type="button" class="btn-secondary" id="saveMyProfileBtn" style="width:100%;">名前・メールアドレスを保存</button>
+
+      <hr style="margin:16px 0; border:none; border-top:1px solid var(--line);">
+      <p class="small-note">暗証番号を変更する場合は、現在の暗証番号を入力してください。</p>
+      <div class="field">
+        <label>現在の暗証番号</label>
+        <input type="password" id="my_currentPin" inputmode="numeric" maxlength="8">
+      </div>
+      <div class="field">
+        <label>新しい暗証番号（4〜8桁）</label>
+        <input type="password" id="my_newPin" inputmode="numeric" maxlength="8">
+      </div>
+      <div class="login-error" id="my_pinError"></div>
+      <button type="button" class="btn-secondary" id="changeMyPinBtn" style="width:100%;">暗証番号を変更</button>
+    </div>
+
+    <div class="card" data-admin-only style="display:none;">
+      <h2>当事者の名前（精算の2人）</h2>
+      <p class="small-note">負担割合などで表示される2人の名前です。管理者のみ変更できます。</p>
+      <div class="row2">
+        <div class="field">
+          <label>当事者A</label>
+          <input type="text" id="partyNameYuji">
+        </div>
+        <div class="field">
+          <label>当事者B</label>
+          <input type="text" id="partyNameMika">
+        </div>
+      </div>
+      <button type="button" class="btn-secondary" id="savePartyNamesBtn" style="width:100%;">名前を保存</button>
+    </div>
+
+    <div class="card" data-admin-only style="display:none;">
+      <h2>ユーザー管理（管理者のみ）</h2>
+      <p class="small-note">ログインできる人を追加・編集できます。暗証番号は「初期化」のみ可能で、本人が次回ログイン時に新しい番号を設定します。</p>
+      <div id="userManageList"></div>
+      <button type="button" class="btn-secondary" id="addUserBtn" style="width:100%; margin-top:8px;">＋ ユーザーを追加</button>
+    </div>
+
+    <div class="card" data-admin-only style="display:none;">
+      <h2>データの初期化（管理者のみ）</h2>
+      <p class="small-note">支払い記録・毎月の定額・精算履歴をすべて削除します（ユーザーやカテゴリ設定は残ります）。本人確認のため、管理者自身のメールアドレスに確認コードを送ります。元に戻せないため注意してください。</p>
+      <button type="button" class="btn-secondary" id="resetDataBtn" style="width:100%; color:var(--danger); border-color:var(--danger);">データを初期化する</button>
+    </div>
+
+    <div class="card">
+      <h2>カテゴリ管理</h2>
+      <div class="chip-row" id="categoryChips"></div>
+      <div class="add-toggle" style="margin-top:12px;">
+        <input type="text" id="newCategory" placeholder="新しいカテゴリ名">
+        <button type="button" id="addCategoryBtn">追加</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>カテゴリ別デフォルト分担割合</h2>
+      <p class="small-note">新しい支払いを記録するとき、ここで設定した割合が自動で入力されます（あとで項目ごとに変更できます）。</p>
+      <div id="categoryRatios"></div>
+    </div>
+    <div class="card">
+      <h2>対象者管理</h2>
+      <div class="chip-row" id="personChips"></div>
+      <div class="add-toggle" style="margin-top:12px;">
+        <input type="text" id="newPerson" placeholder="新しい対象者名">
+        <button type="button" id="addPersonBtn">追加</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>エクセルから取込</h2>
+      <p class="small-note">これまで使っていた揉めない家計簿のエクセル（.xlsx）を読み込んで、支払い記録や毎月の定額費用として取り込みます。シート名「支払い」「毎月」を想定しています。取り込み内容は確認してから反映されます。</p>
+      <button class="btn-secondary" id="excelImportBtn" style="width:100%;">エクセルファイルを選択</button>
+      <input type="file" id="excelFile" accept=".xlsx,.xls" style="display:none;">
+      <div id="excelImportStatus" class="small-note" style="margin-top:8px;"></div>
+    </div>
+    <div class="card">
+      <h2>データの管理</h2>
+      <p class="small-note">FIREBASE_CONFIGを設定している場合、データはクラウド経由でほかの端末と自動的に共有されます。共有がうまくいかないときは「今すぐ同期」をお試しください。</p>
+      <button class="btn-secondary" id="manualSyncBtn" style="width:100%; margin-bottom:8px;">今すぐ同期</button>
+      <button class="btn-secondary" id="exportBtn" style="width:100%; margin-bottom:8px;">データを書き出す（JSON）</button>
+      <button class="btn-secondary" id="importBtn" style="width:100%;">データを読み込む（JSON）</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none;">
+    </div>
+  </section>
+
+</main>
+
+<footer class="note">入力したデータはこの端末（ブラウザ）に保存されます。<br>家族間の共有が必要な場合は「データを書き出す」を使ってください。</footer>
+
+<!-- ===== Edit Entry Modal ===== -->
+<div class="modal-overlay" id="editModalOverlay">
+  <div class="modal">
+    <h3>記録を編集</h3>
+    <form id="editForm">
+      <input type="hidden" id="e_id">
+      <div class="row2">
+        <div class="field">
+          <label>支払日</label>
+          <input type="date" id="e_date" required>
+        </div>
+        <div class="field">
+          <label>カテゴリ</label>
+          <select id="e_category"></select>
+        </div>
+      </div>
+      <div class="field">
+        <label>対象者</label>
+        <select id="e_person"></select>
+      </div>
+      <div class="field">
+        <label>項目名</label>
+        <input type="text" id="e_item" list="itemList" required>
+      </div>
+      <div class="field">
+        <label>① 総計金額</label>
+        <input type="number" id="e_total">
+      </div>
+
+      <div class="small-note" style="margin-top:-4px;">② 先払いしたのはどちら？</div>
+      <div class="role-toggle" id="e_paid_toggle">
+        <button type="button" data-paidwho="yuji">勇治が先払い</button>
+        <button type="button" data-paidwho="mika">美香が先払い</button>
+      </div>
+      <button type="button" class="link-toggle" id="e_paid_detail_toggle">金額を個別に指定する（折半で立て替えた場合など）▾</button>
+      <div id="e_paid_detail" style="display:none;">
+        <div class="row2">
+          <div class="field amt-yuji">
+            <label>勇治が支払った額</label>
+            <input type="number" id="e_paid_yuji">
+          </div>
+          <div class="field amt-mika">
+            <label>美香が支払った額</label>
+            <input type="number" id="e_paid_mika">
+          </div>
+        </div>
+        <div class="split-quick">
+          <button type="button" data-epaid="yuji100">勇治が全額立て替え</button>
+          <button type="button" data-epaid="mika100">美香が全額立て替え</button>
+          <button type="button" data-epaid="half">折半で立て替え</button>
+        </div>
+      </div>
+
+      <div class="small-note" style="margin-top:14px;">③ 精算するときの負担割合（ここでドラッグして調整）</div>
+      <div class="row2">
+        <div class="field amt-yuji">
+          <label>勇治の負担額</label>
+          <input type="number" id="e_yuji">
+        </div>
+        <div class="field amt-mika">
+          <label>美香の負担額</label>
+          <input type="number" id="e_mika">
+        </div>
+      </div>
+      <div class="ratio-bar-wrap">
+        <div class="ratio-bar" id="e_ratio_bar">
+          <div class="seg-y" id="e_bar_y">勇治</div>
+          <div class="seg-m" id="e_bar_m">美香</div>
+          <div class="handle" id="e_bar_handle"></div>
+        </div>
+        <div class="ratio-bar-pcts"><span class="y" id="e_bar_y_pct">勇治 0%</span><span class="m" id="e_bar_m_pct">美香 0%</span></div>
+      </div>
+
+      <div class="diff-note" id="e_diff_note">差額なし</div>
+
+      <div class="field">
+        <label>メモ</label>
+        <input type="text" id="e_memo">
+      </div>
+
+      <label class="exclude-checkbox">
+        <input type="checkbox" id="e_excluded">
+        <span>この支払いは共同の精算対象から除外する（参考記録としてのみ残す）</span>
+      </label>
+
+      <button type="submit" class="btn-primary">更新する</button>
+      <button type="button" class="delete-link" id="deleteEntryBtn" style="width:100%; margin-top:10px;">この記録を削除</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Add/Edit Fixed Modal ===== -->
+<div class="modal-overlay" id="fixedModalOverlay">
+  <div class="modal">
+    <h3 id="fixedModalTitle">定額費用を追加</h3>
+    <form id="fixedForm">
+      <input type="hidden" id="x_id">
+      <div class="field">
+        <label>名称</label>
+        <input type="text" id="x_name" placeholder="例：結衣スマホ通信料" required>
+      </div>
+      <div class="field">
+        <label>プラン・補足（任意）</label>
+        <input type="text" id="x_plan" placeholder="例：通信3GB低速+通話し放題">
+      </div>
+      <div class="field">
+        <label>毎月の金額（円）</label>
+        <input type="number" id="x_amount" inputmode="numeric" placeholder="0" required>
+      </div>
+      <div class="row2">
+        <div class="field amt-yuji">
+          <label>勇治分担</label>
+          <input type="number" id="x_yuji" inputmode="numeric" placeholder="0">
+        </div>
+        <div class="field amt-mika">
+          <label>美香分担</label>
+          <input type="number" id="x_mika" inputmode="numeric" placeholder="0">
+        </div>
+      </div>
+      <div class="split-quick">
+        <button type="button" data-xsplit="yuji100">勇治が全額負担</button>
+        <button type="button" data-xsplit="mika100">美香が全額負担</button>
+        <button type="button" data-xsplit="half">半分ずつ</button>
+      </div>
+      <div class="field" style="margin-top:12px;">
+        <label>支払日（毎月何日 / 任意）</label>
+        <input type="number" id="x_payday" min="1" max="31" placeholder="例：27">
+      </div>
+      <button type="submit" class="btn-primary" style="margin-top:6px;">保存する</button>
+      <button type="button" class="delete-link" id="deleteFixedBtn" style="width:100%; margin-top:10px;">この定額費用を削除</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Ratio Confirm Modal ===== -->
+<div class="modal-overlay" id="confirmModalOverlay">
+  <div class="modal">
+    <h3>分担割合の確認</h3>
+    <p class="small-note" id="confirmItemInfo"></p>
+    <div class="ratio-bar-wrap">
+      <div class="ratio-bar" id="c_ratio_bar">
+        <div class="seg-y" id="c_bar_y">勇治</div>
+        <div class="seg-m" id="c_bar_m">美香</div>
+        <div class="handle" id="c_bar_handle"></div>
+      </div>
+      <div class="ratio-bar-pcts"><span class="y" id="c_bar_y_pct">勇治 50%</span><span class="m" id="c_bar_m_pct">美香 50%</span></div>
+    </div>
+    <div class="row2">
+      <div class="field amt-yuji">
+        <label>勇治分担（円）</label>
+        <input type="number" id="c_yuji" inputmode="numeric">
+      </div>
+      <div class="field amt-mika">
+        <label>美香分担（円）</label>
+        <input type="number" id="c_mika" inputmode="numeric">
+      </div>
+    </div>
+    <p class="small-note" id="confirmDiffNote"></p>
+    <div class="confirm-lock-note" id="confirmLockNote" style="display:none;"></div>
+    <button type="button" class="btn-secondary" id="savePendingBtn" style="width:100%; margin-bottom:10px;">この内容で保存する（未確定のまま）</button>
+    <button type="button" class="btn-primary" id="confirmRatioBtn" style="background:#3f8f5f;">この割合で確定する</button>
+    <button type="button" class="btn-secondary" id="cancelConfirmBtn" style="width:100%; margin-top:10px;">あとで確認する</button>
+  </div>
+</div>
+
+<!-- ===== Recent Items Modal ===== -->
+<div class="modal-overlay" id="recentModalOverlay">
+  <div class="modal">
+    <h3>最近追加された項目</h3>
+    <p class="small-note">直近で記録された支払いです。割合の確認がまだの項目は赤いボタンで分かります。</p>
+    <div id="recentList"></div>
+  </div>
+</div>
+
+<!-- ===== Notify Users Modal ===== -->
+<div class="modal-overlay" id="notifyModalOverlay">
+  <div class="modal">
+    <h3>変更をメールで知らせますか？</h3>
+    <p class="small-note" id="notifyMessagePreview"></p>
+    <div id="notifyUserList" style="margin:10px 0;"></div>
+    <button type="button" class="btn-primary" id="notifySendBtn">選んだ相手に送信する</button>
+    <button type="button" class="btn-secondary" id="notifySkipBtn" style="width:100%; margin-top:10px;">送信しない</button>
+  </div>
+</div>
+
+<!-- ===== Edit/Add User Modal ===== -->
+<div class="modal-overlay" id="userModalOverlay">
+  <div class="modal">
+    <h3 id="userModalTitle">ユーザーを追加</h3>
+    <input type="hidden" id="um_id">
+    <div class="field">
+      <label>名前</label>
+      <input type="text" id="um_name" placeholder="例：勇治">
+    </div>
+    <div class="field">
+      <label>メールアドレス</label>
+      <input type="email" id="um_email" placeholder="example@example.com">
+    </div>
+    <div class="field">
+      <label>権限</label>
+      <select id="um_role">
+        <option value="member">利用者</option>
+        <option value="admin">管理者</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>所属する当事者（精算の負担割合に関わる場合）</label>
+      <select id="um_party">
+        <option value="">なし（管理のみ）</option>
+        <option value="yuji">当事者A</option>
+        <option value="mika">当事者B</option>
+      </select>
+    </div>
+    <button type="button" class="btn-primary" id="saveUserBtn">保存する</button>
+    <button type="button" class="btn-secondary" id="resetUserPinBtn" style="width:100%; margin-top:10px;">この人の暗証番号を初期化する</button>
+    <button type="button" class="delete-link" id="deleteUserBtn" style="width:100%; margin-top:10px;">このユーザーを削除</button>
+    <button type="button" class="btn-secondary" id="closeUserModalBtn" style="width:100%; margin-top:10px;">閉じる</button>
+  </div>
+</div>
+
+<!-- ===== Admin Data Reset Modal ===== -->
+<div class="modal-overlay" id="adminResetModalOverlay">
+  <div class="modal">
+    <h3>データの初期化</h3>
+    <div id="adminResetStep1">
+      <p class="small-note">ご自身（管理者）のメールアドレスに確認コードを送ります。</p>
+      <button type="button" class="btn-primary" id="ar_sendCodeBtn">確認コードを送信</button>
+    </div>
+    <div id="adminResetStep2" style="display:none;">
+      <p class="small-note" id="ar_sentNote"></p>
+      <div class="field">
+        <label>確認コード（6桁）</label>
+        <input type="text" id="ar_code" inputmode="numeric" maxlength="6" placeholder="123456">
+      </div>
+      <div class="login-error" id="ar_error"></div>
+      <button type="button" class="btn-primary" id="ar_confirmBtn" style="background:var(--danger);">確認してすべての記録を初期化する</button>
+    </div>
+    <button type="button" class="btn-secondary" id="ar_cancelBtn" style="width:100%; margin-top:10px;">キャンセル</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
+// === 期間モード・タイル ===
+let periodMode = localStorage.getItem('kperiodMode') || 'input';
+let selTiles = [];
+
+function savePeriodMode(v){ periodMode=v; localStorage.setItem('kperiodMode',v); applyPeriodMode(); }
+function applyPeriodMode(){
+  document.querySelectorAll('input[name="periodMode"]').forEach(function(r){ r.checked=(r.value===periodMode); });
+  var tw=document.getElementById('tilePeriodWrap');
+  if(tw){ if(periodMode==='tile'){ tw.classList.add('active'); renderTileGrid(); } else tw.classList.remove('active'); }
+  if(typeof renderBalance==='function') renderBalance();
+}
+function allDataMonths(){
+  var s={}; (DATA.entries||[]).forEach(function(e){ if(e.date) s[monthKey(e.date)]=1; }); return Object.keys(s).sort();
+}
+function isSettledMonth(ym){
+  return (DATA.settlementRequests||[]).some(function(r){
+    return r.status==='completed' && r.startDate && r.endDate && ym>=r.startDate.substring(0,7) && ym<=r.endDate.substring(0,7);
+  });
+}
+function renderTileGrid(){
+  var g=document.getElementById('tileGrid'); if(!g) return;
+  var ms=allDataMonths();
+  if(!ms.length){ g.innerHTML='<div style="color:#aaa;font-size:12px;">記録がありません</div>'; return; }
+  g.innerHTML=ms.map(function(ym){
+    var settled=isSettledMonth(ym), selected=selTiles.indexOf(ym)>=0;
+    var cls=settled?'settled':selected?'selected':'unsettled';
+    return '<button class="tile-month '+cls+'" '+(settled?'disabled':'')+
+      ' onclick="toggleTile(\''+ym+'\')">'+ym.replace('-','/')+'</button>';
+  }).join('');
+  var info=document.getElementById('tileInfo');
+  if(info) info.textContent=selTiles.length?selTiles.length+'ヶ月選択中':'月をタップして選択';
+}
+function toggleTile(ym){
+  if(isSettledMonth(ym)) return;
+  var i=selTiles.indexOf(ym); if(i>=0) selTiles.splice(i,1); else selTiles.push(ym);
+  renderTileGrid(); if(typeof renderBalance==='function') renderBalance();
+}
+function selectAllTiles(){ selTiles=allDataMonths().filter(function(ym){return !isSettledMonth(ym);}); renderTileGrid(); if(typeof renderBalance==='function') renderBalance(); }
+function deselectAllTiles(){ selTiles=[]; renderTileGrid(); if(typeof renderBalance==='function') renderBalance(); }
+function computeBalancePeriod(months){
+  var bal=0;
+  (DATA.entries||[]).forEach(function(e){
+    if(e.excluded||e.settled) return;
+    if(months&&months.length&&months.indexOf(monthKey(e.date))<0) return;
+    bal+=(e.mika||0)-(e.paidMika||0);
+  });
+  (DATA.fixedPayments||[]).forEach(function(p){ if(p.status==='paid') bal+=(p.mika||0); });
+  (DATA.settlements||[]).forEach(function(s){ if(s.direction==='mika_to_yuji') bal-=s.amount; else bal+=s.amount; });
+  return bal;
+}
+(function(){
+  var orig=window.renderBalance;
+  if(typeof orig!=='function') return;
+  window.renderBalance=function(){
+    if(periodMode==='tile'&&selTiles.length>0){
+      var bal=computeBalancePeriod(selTiles);
+      ['balanceBanner','balanceBanner2'].forEach(function(id,i){
+        var el=document.getElementById(id); if(!el) return;
+        el.classList.remove('mika-owes','yuji-owes','flat','period-sel');
+        el.classList.add('period-sel');
+        var n1=(DATA.partyNames&&DATA.partyNames[0])||'ユーザー１';
+        var n2=(DATA.partyNames&&DATA.partyNames[1])||'ユーザー２';
+        var amtId=['balanceAmount','balanceAmount2'][i];
+        var subId=['balanceSub','balanceSub2'][i];
+        document.getElementById(amtId).textContent=yen(Math.abs(bal));
+        document.getElementById(subId).textContent=Math.abs(bal)<1?'選択期間の精算不要':bal>0?n2+' → '+n1+' へ支払いが必要です':n1+' → '+n2+' へ支払いが必要です';
+      });
+    } else { orig(); }
+  };
+  document.addEventListener('DOMContentLoaded',function(){ applyPeriodMode(); });
+})();
+// === 精算：両ユーザー確認制 ===
+document.addEventListener('DOMContentLoaded',function(){
+  var btn=document.getElementById('confirmSettlePeriodBtn'); if(!btn) return;
+  btn.addEventListener('click',function(e){
+    e.stopImmediatePropagation();
+    var p=getPendingSettleRequest(); if(!p) return;
+    if(!p.confirmedBy) p.confirmedBy=[];
+    if(p.confirmedBy.indexOf(currentUser)<0) p.confirmedBy.push(currentUser);
+    var users=DATA.users||[];
+    var allOk=users.length>=2?users.every(function(u){return p.confirmedBy.indexOf(u.id)>=0;}):p.confirmedBy.length>=2;
+    if(allOk){
+      p.status='completed'; p.completedAt=Date.now();
+      (p.entryIds||[]).forEach(function(id){ var e=DATA.entries.find(function(x){return x.id===id;}); if(e) e.settled=true; });
+      save(); alert('精算が完了しました！');
+    } else { save(); alert('確認を記録しました。もう一方のユーザーの確認をお待ちください。'); }
+    renderSettlePeriod();
+  },true);
+});
+
+
+// === 精算タイル ===
+var _spm="c",_sTiles=[];
+function spmMode(v){_spm=v;var c=document.getElementById("sCalBar"),t=document.getElementById("sTileWrap");if(c)c.style.display=v==="c"?"flex":"none";if(t)t.style.display=v==="t"?"block":"none";if(v==="t")renderSTile();document.querySelectorAll("input[name=spm]").forEach(function(r){r.checked=(r.value===v);});}
+function _sMos(){var s={};(DATA.entries||[]).forEach(function(e){if(e.date)s[monthKey(e.date)]=1;});return Object.keys(s).sort();}
+function _isSetMo(ym){return(DATA.settlementRequests||[]).some(function(r){return r.status==="completed"&&r.startDate&&r.endDate&&ym>=r.startDate.substring(0,7)&&ym<=r.endDate.substring(0,7);});}
+function renderSTile(){var g=document.getElementById("sTileGrid");if(!g)return;var ms=_sMos();if(!ms.length){g.innerHTML='<div style="color:#aaa;font-size:12px;">記録がありません</div>';return;}g.innerHTML=ms.map(function(ym){var s=_isSetMo(ym),sel=_sTiles.indexOf(ym)>=0;var c=s?"settled":sel?"selected":"unsettled";return '<button class="tile-mo '+c+'" '+(s?"disabled":"")+' onclick="toggleSTile(\''+(ym)+'\')">'+ym.replace("-","/")+'</button>';}).join("");var i=document.getElementById("sTileInfo");if(i)i.textContent=_sTiles.length?_sTiles.length+"ヶ月選択中":"未精算月をタップして選択";}
+function toggleSTile(ym){if(_isSetMo(ym))return;var i=_sTiles.indexOf(ym);if(i>=0)_sTiles.splice(i,1);else _sTiles.push(ym);renderSTile();}
+function sTileAll(){_sTiles=_sMos().filter(function(ym){return!_isSetMo(ym);});renderSTile();}
+function sTileClr(){_sTiles=[];renderSTile();}
+document.addEventListener("DOMContentLoaded",function(){setTimeout(function(){renderSTile();var ms=_sMos();var ss=document.getElementById("settlePeriodStart"),se=document.getElementById("settlePeriodEnd");if(ss&&ms.length&&!ss.value)ss.value=ms[0];if(se&&ms.length&&!se.value)se.value=ms[ms.length-1];},1000);});
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+/* ===================== SAFE STORAGE WRAPPER =====================
+  iPhone Safariなどでは file:// で開いたページに対し localStorage / sessionStorage が
+  使えず例外を投げる場合があります。例外が発生するとスクリプト全体が止まってしまうため、
+  必ずこのラッパーを経由し、失敗時はメモリ上の代替ストレージにフォールバックします。
+*/
+const memoryFallback = { local: {}, session: {} };
+const safeStorage = {
+  get(kind, key){
+    try{
+      const store = kind==='local' ? localStorage : sessionStorage;
+      return store.getItem(key);
+    }catch(e){
+      const fallbackStore = (kind==='local' ? memoryFallback.local : memoryFallback.session);
+      return (key in fallbackStore) ? fallbackStore[key] : null;
+    }
+  },
+  set(kind, key, value){
+    try{
+      const store = kind==='local' ? localStorage : sessionStorage;
+      store.setItem(key, value);
+    }catch(e){
+      (kind==='local' ? memoryFallback.local : memoryFallback.session)[key] = value;
+    }
+  },
+  remove(kind, key){
+    try{
+      const store = kind==='local' ? localStorage : sessionStorage;
+      store.removeItem(key);
+    }catch(e){
+      delete (kind==='local' ? memoryFallback.local : memoryFallback.session)[key];
+    }
+  }
+};
+
+const STORE_KEY = 'kyodo_shiharai_v1';
+
+function defaultData(){
+  return {
+    categories: ['生活','学校','住宅','地域','その他'],
+    categoryRatios: { '生活':50, '学校':50, '住宅':50, '地域':50, 'その他':50 },
+    persons: ['共通','勇治','美香','勇人','結衣'],
+    items: ['通学定期券','スマホ通信料','固定資産税','南下條組費'],
+    entries: [],
+    fixed: [],
+    fixedPayments: [],
+    settlements: [],
+    settlementRequests: [],
+    partyNames: { yuji: '勇治', mika: '美香' },
+    users: [],
+    pendingResets: [],
+    adminVerifications: []
+  };
+}
+
+function ensureDefaultUsers(){
+  if(!DATA.users) DATA.users = [];
+  if(DATA.users.length === 0){
+    // 既存利用者（勇治/美香の2人だけだった頃）からの移行用デフォルト
+    // ID は固定値にして、何度作り直されても同じユーザーとして扱われるようにする
+    DATA.users.push({
+      id: 'default-yuji', name: DATA.partyNames.yuji, email: '', role: 'admin', party: 'yuji',
+      pinHash: null, createdAt: Date.now(),
+    });
+    DATA.users.push({
+      id: 'default-mika', name: DATA.partyNames.mika, email: '', role: 'member', party: 'mika',
+      pinHash: null, createdAt: Date.now(),
+    });
+    return true; // 新規作成した
+  }
+  return false;
+}
+
+function getCategoryRatio(cat){
+  if(!DATA.categoryRatios) DATA.categoryRatios = {};
+  const v = DATA.categoryRatios[cat];
+  return (typeof v === 'number' && !isNaN(v)) ? v : 50;
+}
+
+let DATA = load();
+
+function load(){
+  try{
+    const raw = safeStorage.get('local', STORE_KEY);
+    if(!raw) return defaultData();
+    const parsed = JSON.parse(raw);
+    return Object.assign(defaultData(), parsed);
+  }catch(e){
+    console.error('load error', e);
+    return defaultData();
+  }
+}
+
+function saveLocalOnly(){
+  try{
+    safeStorage.set('local', STORE_KEY, JSON.stringify(DATA));
+  }catch(e){
+    alert('保存に失敗しました。空き容量を確認してください。');
+  }
+}
+
+/* ===================== CLOUD SYNC (Firebase Realtime Database) =====================
+  販売用（SaaS版）：顧客ごとに個別設定は不要。1つのFirebaseプロジェクトを
+  全顧客で共有し、世帯（テナント）ごとのデータ分離は認証＋データベースルールで行う。
+
+  【運営者側の設定方法（このアプリを配布する前に1回だけ行う）】
+  1. https://console.firebase.google.com で、個人利用中のプロジェクトとは別に
+     販売用の新規プロジェクトを作成する
+  2. 「Realtime Database」を作成する
+  3. 「Authentication」→ Sign-in method で「メール/パスワード」を有効化する
+  4. プロジェクト設定 → 「アプリを追加」→ ウェブアプリ で表示される config を
+     下の FIREBASE_CONFIG にそのまま貼り替える
+  5. Realtime Databaseの「ルール」タブに、世帯ごとのアクセス制御ルールを設定する
+     （ルール本文は壁打ちの記録・実装計画側を参照）
+
+  DB_PATH は固定値ではなく、ログイン後に解決される世帯（家計）IDから
+  実行時に組み立てられる（'households/' + householdId + '/data'）。
+  設定が済んでいない・通信できない場合は、自動的にこの端末だけのローカル保存にフォールバックします。
+*/
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCuFIqj6cIjhm9yvBZF3pBd4neDyMdMr64",
+  authDomain: "shared-kakeibo-aa995.firebaseapp.com",
+  databaseURL: "https://shared-kakeibo-aa995-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "shared-kakeibo-aa995",
+  storageBucket: "shared-kakeibo-aa995.firebasestorage.app",
+  messagingSenderId: "213836738589",
+  appId: "1:213836738589:web:163d7e7e478306bf57d6f4",
+};
+let DB_PATH = null; // 世帯解決後に 'households/{householdId}/data' が代入される
+
+let serverAvailable = false;
+let pushTimer = null;
+let firebaseRef = null;
+let applyingRemoteUpdate = false;
+
+function setSyncStatus(text, state){
+  const el = document.getElementById('syncStatus');
+  if(!el) return;
+  el.textContent = text;
+  el.className = 'sync-status ' + (state||'');
+}
+
+function initFirebaseSync(){
+  try{
+    if(!firebaseConfigured() || !DB_PATH){
+      setSyncStatus('未設定（この端末のみ保存）', 'warn');
+      return false;
+    }
+    firebaseRef = firebase.database().ref(DB_PATH);
+    firebaseRef.on('value', snapshot=>{
+      const val = snapshot.val();
+      serverAvailable = true;
+      const now = new Date();
+      const stamp = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+      if(val){
+        const before = JSON.stringify(DATA);
+        const previousUsers = DATA.users;
+        const previousPartyNames = DATA.partyNames;
+        DATA = Object.assign(defaultData(), val);
+        // クラウド側に移行前データ（ユーザー情報なし）しかない場合、ローカルの情報を失わないようにする
+        if((!val.users || val.users.length===0) && previousUsers && previousUsers.length>0){
+          DATA.users = previousUsers;
+        }
+        if(!val.partyNames && previousPartyNames){
+          DATA.partyNames = previousPartyNames;
+        }
+        saveLocalOnly();
+        if(JSON.stringify(DATA) !== before){
+          applyingRemoteUpdate = true;
+          refreshAll();
+          applyingRemoteUpdate = false;
+        }
+      } else {
+        // クラウド側にまだ何もない → 今のローカルデータを初回アップロード
+        pushServerData();
+      }
+      setSyncStatus('同期済み ' + stamp, 'ok');
+    }, err=>{
+      console.error('firebase sync error', err);
+      serverAvailable = false;
+      setSyncStatus('未同期（この端末のみ保存）', 'warn');
+    });
+    return true;
+  }catch(e){
+    console.error('firebase init error', e);
+    setSyncStatus('未設定（この端末のみ保存）', 'warn');
+    return false;
+  }
+}
+
+async function pushServerData(){
+  if(!firebaseRef){
+    setSyncStatus('未設定（この端末のみ保存）', 'warn');
+    return;
+  }
+  try{
+    await firebaseRef.set(DATA);
+  }catch(e){
+    console.error('firebase push error', e);
+    serverAvailable = false;
+    setSyncStatus('未同期（この端末のみ保存）', 'warn');
+  }
+}
+
+function save(){
+  saveLocalOnly();
+  if(applyingRemoteUpdate) return; // クラウドからの反映中は送り返さない
+  if(pushTimer) clearTimeout(pushTimer);
+  pushTimer = setTimeout(pushServerData, 250);
+}
+
+async function manualSync(){
+  if(!firebaseRef){
+    return false;
+  }
+  try{
+    const snap = await firebaseRef.once('value');
+    const val = snap.val();
+    if(val){
+      DATA = Object.assign(defaultData(), val);
+      saveLocalOnly();
+    }
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+
+function uid(){
+  return Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+}
+
+function yen(n){
+  n = Math.round(n || 0);
+  const sign = n < 0 ? '-' : '';
+  return sign + '¥' + Math.abs(n).toLocaleString('ja-JP');
+}
+
+/* ===================== ACCOUNT / HOUSEHOLD (Firebase Auth + マルチテナント) =====================
+  販売版のみに存在する層。「誰がどの世帯（家計）のデータにアクセスできるか」を
+  Firebase Authenticationのログインと、households/{id}/members での所属チェックで決める。
+  ここで世帯IDが解決された後、既存のstartApp()→initApp()（党員PIN・精算などの中身は無改変）を呼び出す。
+*/
+let currentHouseholdId = null;
+let inviteHouseholdId = new URLSearchParams(location.search).get('invite') || null;
+let pendingAuthMode = 'signin'; // 'signin' | 'signup'
+let appStarted = false;
+
+function firebaseConfigured(){
+  return !!(window.firebase && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.databaseURL &&
+    FIREBASE_CONFIG.apiKey.indexOf('REPLACE_WITH') !== 0);
+}
+
+function initFirebaseApp(){
+  if(!firebaseConfigured()) return false;
+  if(!firebase.apps.length){
+    firebase.initializeApp(FIREBASE_CONFIG);
+  }
+  return true;
+}
+
+function showAccountOverlay(){
+  document.getElementById('householdSetupOverlay').classList.add('hidden');
+  document.getElementById('loginOverlay').classList.add('hidden');
+  document.getElementById('accountOverlay').classList.remove('hidden');
+}
+function hideAccountOverlay(){
+  document.getElementById('accountOverlay').classList.add('hidden');
+}
+function setAccountMode(mode){
+  pendingAuthMode = mode;
+  document.getElementById('accountModeSub').textContent = mode==='signup' ? 'メールアドレスで新規登録' : 'メールアドレスでログイン';
+  document.getElementById('accountSubmitBtn').textContent = mode==='signup' ? '新規登録する' : 'ログイン';
+  document.getElementById('accountModeToggle').textContent = mode==='signup' ? 'すでにアカウントをお持ちの方はこちら（ログイン）' : 'アカウントをお持ちでない方はこちら（新規登録）';
+  document.getElementById('accountError').textContent = '';
+}
+
+function accountErrorMessage(e){
+  switch(e && e.code){
+    case 'auth/email-already-in-use': return 'このメールアドレスは既に登録されています。ログインしてください。';
+    case 'auth/invalid-email': return 'メールアドレスの形式が正しくありません。';
+    case 'auth/weak-password': return 'パスワードは6文字以上にしてください。';
+    case 'auth/user-not-found':
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential': return 'メールアドレスまたはパスワードが正しくありません。';
+    default: return '通信に失敗しました。時間をおいて再度お試しください。';
+  }
+}
+
+document.getElementById('accountModeToggle').addEventListener('click', ()=>{
+  setAccountMode(pendingAuthMode==='signup' ? 'signin' : 'signup');
+});
+
+document.getElementById('accountSubmitBtn').addEventListener('click', async ()=>{
+  const email = document.getElementById('acc_email').value.trim();
+  const password = document.getElementById('acc_password').value;
+  const errEl = document.getElementById('accountError');
+  errEl.textContent = '';
+  if(!email || !password){ errEl.textContent = 'メールアドレスとパスワードを入力してください。'; return; }
+  try{
+    if(pendingAuthMode==='signup'){
+      await firebase.auth().createUserWithEmailAndPassword(email, password);
+    } else {
+      await firebase.auth().signInWithEmailAndPassword(email, password);
+    }
+  }catch(e){
+    console.error('account auth error', e);
+    errEl.textContent = accountErrorMessage(e);
+  }
+});
+
+document.getElementById('accountSignOutBtn').addEventListener('click', ()=>{
+  firebase.auth().signOut();
+});
+
+/* ---- 世帯（家計）セットアップ ---- */
+function showHouseholdSetup(){
+  document.getElementById('accountOverlay').classList.add('hidden');
+  document.getElementById('loginOverlay').classList.add('hidden');
+  document.getElementById('householdSetupOverlay').classList.remove('hidden');
+  document.getElementById('hh_error').textContent = '';
+  if(inviteHouseholdId){
+    document.getElementById('hh_createStep').style.display = 'none';
+    document.getElementById('hh_inviteStep').style.display = 'none';
+    document.getElementById('hh_joiningStep').style.display = 'block';
+    joinHouseholdViaInvite(inviteHouseholdId);
+  } else {
+    document.getElementById('hh_createStep').style.display = 'block';
+    document.getElementById('hh_inviteStep').style.display = 'none';
+    document.getElementById('hh_joiningStep').style.display = 'none';
+  }
+}
+function hideHouseholdSetup(){
+  document.getElementById('householdSetupOverlay').classList.add('hidden');
+}
+
+async function joinHouseholdViaInvite(hid){
+  const errEl = document.getElementById('hh_error');
+  try{
+    // ルール上、membersの「読み取り」は既存メンバーしか許可していないため、
+    // 参加前に存在確認はできない（メンバー登録の書き込み自体は自分のuidエントリのみ許可されている）。
+    // 招待IDはpush()で生成した推測困難な文字列なので、誤った招待IDでも実害はなく
+    // 新規の空世帯が作られるだけに留まる。
+    const uidVal = firebase.auth().currentUser.uid;
+    await firebase.database().ref('households/'+hid+'/members/'+uidVal).set(true);
+    await firebase.database().ref('userHouseholds/'+uidVal).set(hid);
+    onHouseholdResolved(hid);
+  }catch(e){
+    console.error('join household error', e);
+    document.getElementById('hh_joiningStep').style.display = 'none';
+    document.getElementById('hh_createStep').style.display = 'block';
+    errEl.textContent = '招待リンクへの参加に失敗しました。新しく家計を作成してください。';
+    inviteHouseholdId = null;
+  }
+}
+
+document.getElementById('hh_createBtn').addEventListener('click', async ()=>{
+  const errEl = document.getElementById('hh_error');
+  errEl.textContent = '';
+  try{
+    const uidVal = firebase.auth().currentUser.uid;
+    const hid = firebase.database().ref('households').push().key;
+    await firebase.database().ref('households/'+hid+'/members/'+uidVal).set(true);
+    await firebase.database().ref('userHouseholds/'+uidVal).set(hid);
+    const inviteUrl = location.origin + location.pathname + '?invite=' + hid;
+    document.getElementById('hh_inviteLinkInput').value = inviteUrl;
+    document.getElementById('hh_createStep').style.display = 'none';
+    document.getElementById('hh_inviteStep').style.display = 'block';
+    currentHouseholdId = hid;
+  }catch(e){
+    console.error('create household error', e);
+    errEl.textContent = '家計の作成に失敗しました。時間をおいて再度お試しください。';
+  }
+});
+
+document.getElementById('hh_copyInviteBtn').addEventListener('click', async ()=>{
+  const input = document.getElementById('hh_inviteLinkInput');
+  input.select();
+  try{
+    await navigator.clipboard.writeText(input.value);
+    const btn = document.getElementById('hh_copyInviteBtn');
+    btn.textContent = 'コピーしました';
+    setTimeout(()=>{ btn.textContent = 'コピー'; }, 2000);
+  }catch(e){
+    // クリップボードAPIが使えない環境では、選択状態にするので手動コピーしてもらう
+  }
+});
+
+document.getElementById('hh_inviteDoneBtn').addEventListener('click', ()=>{
+  onHouseholdResolved(currentHouseholdId);
+});
+
+function onHouseholdResolved(hid){
+  currentHouseholdId = hid;
+  DB_PATH = 'households/' + hid + '/data';
+  hideHouseholdSetup();
+  hideAccountOverlay();
+  startApp();
+}
+
+/* ---- 起動フロー全体の制御 ---- */
+function startApp(){
+  if(appStarted) return;
+  appStarted = true;
+  initApp();
+}
+
+function boot(){
+  if(!initFirebaseApp()){
+    // Firebase未設定（プレースホルダのまま）の場合は、認証を経由せずローカル保存のみで従来通り起動
+    startApp();
+    return;
+  }
+  firebase.auth().onAuthStateChanged(async user=>{
+    if(!user){
+      // サインアウト・別アカウントへの切替時、前の世帯の同期を止めてから状態を初期化する
+      if(firebaseRef){ firebaseRef.off(); firebaseRef = null; }
+      currentHouseholdId = null;
+      DB_PATH = null;
+      appStarted = false;
+      currentUserId = null;
+      DATA = defaultData();
+      document.getElementById('loginOverlay').classList.add('hidden');
+      showAccountOverlay();
+      return;
+    }
+    hideAccountOverlay();
+    try{
+      const snap = await firebase.database().ref('userHouseholds/'+user.uid).once('value');
+      const hid = snap.val();
+      if(hid){
+        onHouseholdResolved(hid);
+      } else {
+        showHouseholdSetup();
+      }
+    }catch(e){
+      console.error('household lookup error', e);
+      showHouseholdSetup();
+    }
+  });
+}
+
+/* ===================== AUTH (ログイン・マルチユーザー) ===================== */
+const SESSION_KEY = 'kyodo_current_user_id';
+const BIO_KEY = 'kyodo_biometric_v1'; // 端末ごとの生体認証クレデンシャル（同期しない）
+let currentUserId = safeStorage.get('session', SESSION_KEY) || null;
+let currentUser = null; // 'yuji' | 'mika' | null（ログイン中ユーザーが所属する当事者）
+let selectedLoginUserId = null;
+
+function getUserById(id){ return (DATA.users||[]).find(u=>u.id===id) || null; }
+function getCurrentUserRecord(){ return currentUserId ? getUserById(currentUserId) : null; }
+function isAdmin(){ const u = getCurrentUserRecord(); return !!(u && u.role==='admin'); }
+function syncCurrentParty(){
+  const u = getCurrentUserRecord();
+  currentUser = u ? (u.party || null) : null;
+}
+
+function loadBioMap(){
+  try{
+    const raw = safeStorage.get('local', BIO_KEY);
+    return raw ? JSON.parse(raw) : {};
+  }catch(e){ return {}; }
+}
+function saveBioMap(map){ safeStorage.set('local', BIO_KEY, JSON.stringify(map)); }
+function getBioCredId(userId){ return loadBioMap()[userId] || null; }
+function setBioCredId(userId, credId){ const m = loadBioMap(); m[userId] = credId; saveBioMap(m); }
+
+function simpleHash(s){
+  let h = 0;
+  for(let i=0;i<s.length;i++){ h = (h*31 + s.charCodeAt(i)) >>> 0; }
+  return h.toString(36);
+}
+function roleLabel(p){ if(!p) return ''; return (DATA.partyNames && DATA.partyNames[p]) || (p==='yuji'?'勇治':'美香'); }
+function otherRole(p){ return p==='yuji' ? 'mika' : 'yuji'; }
+function userLabel(userId){ const u = getUserById(userId); return u ? u.name : ''; }
+
+function refreshHeaderUser(){
+  const el = document.getElementById('headerMe');
+  if(!el) return;
+  const u = getCurrentUserRecord();
+  el.textContent = u ? u.name + (u.role==='admin' ? '（管理者）' : '') : '';
+  el.className = 'me ' + (currentUser||'');
+  document.querySelectorAll('[data-admin-only]').forEach(el=>{
+    el.style.display = isAdmin() ? '' : 'none';
+  });
+}
+
+function buildUserToggle(){
+  ensureDefaultUsers();
+  const wrap = document.getElementById('userToggle');
+  wrap.innerHTML = DATA.users.map(u=>{
+    return `<button type="button" data-user-id="${u.id}">${escapeHtml(u.name)}</button>`;
+  }).join('');
+  wrap.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('click', ()=> selectLoginUser(btn.dataset.userId));
+  });
+}
+
+function showLogin(){
+  buildUserToggle();
+  document.getElementById('loginOverlay').classList.remove('hidden');
+  document.getElementById('loginPin').value = '';
+  document.getElementById('loginError').textContent = '';
+  const firstId = selectedLoginUserId || (DATA.users[0] && DATA.users[0].id);
+  if(firstId) selectLoginUser(firstId);
+}
+function hideLogin(){
+  document.getElementById('loginOverlay').classList.add('hidden');
+}
+function selectLoginUser(userId){
+  selectedLoginUserId = userId;
+  document.querySelectorAll('#userToggle button').forEach(b=>{
+    const u = getUserById(b.dataset.userId);
+    b.classList.toggle('sel-yuji', b.dataset.userId===userId && u && u.party==='yuji');
+    b.classList.toggle('sel-mika', b.dataset.userId===userId && u && u.party==='mika');
+    b.classList.toggle('sel-admin', b.dataset.userId===userId && u && !u.party);
+  });
+  updateLoginHint();
+  const bioBtn = document.getElementById('biometricBtn');
+  const bioNote = document.getElementById('biometricNote');
+  const supportsBio = !!(window.PublicKeyCredential) && window.isSecureContext;
+  if(supportsBio){
+    bioBtn.style.display = 'block';
+    bioNote.style.display = 'none';
+    bioBtn.textContent = getBioCredId(userId) ? '指紋・顔認証でログイン' : '指紋・顔認証を登録してログイン';
+  } else {
+    bioBtn.style.display = 'none';
+    bioNote.style.display = 'block';
+    if(!window.isSecureContext){
+      bioNote.textContent = '指紋・顔認証は、このファイルを直接開いた状態（file://）では使えません。Webサーバー（https、または http://localhost）経由で開くと利用できます。暗証番号でログインしてください。';
+    } else {
+      bioNote.textContent = 'この端末・ブラウザは指紋・顔認証に対応していません。暗証番号でログインしてください。';
+    }
+  }
+}
+function updateLoginHint(){
+  const hint = document.getElementById('loginHint');
+  const u = getUserById(selectedLoginUserId);
+  if(u && !u.pinHash){
+    hint.textContent = `初回ログイン：今入力した暗証番号が、次回以降の${u.name}のログインに使われます。`;
+  } else {
+    hint.textContent = '';
+  }
+}
+
+function doLogin(userId){
+  currentUserId = userId;
+  safeStorage.set('session', SESSION_KEY, userId);
+  syncCurrentParty();
+  hideLogin();
+  refreshHeaderUser();
+  refreshAll();
+}
+
+document.getElementById('loginBtn').addEventListener('click', ()=>{
+  const pin = document.getElementById('loginPin').value.trim();
+  const errEl = document.getElementById('loginError');
+  if(pin.length < 4){ errEl.textContent = '暗証番号は4桁以上で入力してください。'; return; }
+  const u = getUserById(selectedLoginUserId);
+  if(!u){ errEl.textContent = 'ユーザーを選んでください。'; return; }
+  if(!u.pinHash){
+    u.pinHash = simpleHash(pin);
+    save();
+    doLogin(u.id);
+    return;
+  }
+  if(u.pinHash === simpleHash(pin)){
+    doLogin(u.id);
+  } else {
+    errEl.textContent = '暗証番号が違います。';
+  }
+});
+
+document.getElementById('biometricBtn').addEventListener('click', async ()=>{
+  const errEl = document.getElementById('loginError');
+  errEl.textContent = '';
+  const u = getUserById(selectedLoginUserId);
+  if(!u){ errEl.textContent = 'ユーザーを選んでください。'; return; }
+  if(!window.PublicKeyCredential || !window.isSecureContext){
+    errEl.textContent = 'この開き方（file://など）では指紋・顔認証が使えません。暗証番号でログインしてください。';
+    return;
+  }
+  try{
+    const existingCredId = getBioCredId(u.id);
+    if(!existingCredId){
+      const challenge = crypto.getRandomValues(new Uint8Array(32));
+      const userIdBytes = crypto.getRandomValues(new Uint8Array(16));
+      const cred = await navigator.credentials.create({
+        publicKey: {
+          challenge,
+          rp: { name: '揉めない家計簿' },
+          user: { id: userIdBytes, name: u.id, displayName: u.name },
+          pubKeyCredParams: [{type:'public-key', alg:-7}, {type:'public-key', alg:-257}],
+          authenticatorSelection: { authenticatorAttachment:'platform', userVerification:'required' },
+          timeout: 60000,
+        }
+      });
+      if(cred){
+        setBioCredId(u.id, btoa(String.fromCharCode(...new Uint8Array(cred.rawId))));
+        doLogin(u.id);
+      }
+    } else {
+      const challenge = crypto.getRandomValues(new Uint8Array(32));
+      const credIdBytes = Uint8Array.from(atob(existingCredId), c=>c.charCodeAt(0));
+      const assertion = await navigator.credentials.get({
+        publicKey: {
+          challenge,
+          allowCredentials: [{ id: credIdBytes, type:'public-key' }],
+          userVerification: 'required',
+          timeout: 60000,
+        }
+      });
+      if(assertion) doLogin(u.id);
+    }
+  }catch(err){
+    console.error(err);
+    errEl.textContent = '指紋・顔認証に失敗しました。暗証番号でログインしてください。';
+  }
+});
+
+document.getElementById('logoutBtn').addEventListener('click', ()=>{
+  safeStorage.remove('session', SESSION_KEY);
+  currentUserId = null;
+  currentUser = null;
+  showLogin();
+});
+
+/* ---- 暗証番号を忘れた場合（メールでコード送信→再設定） ---- */
+const forgotPinModalOverlay = document.getElementById('forgotPinModalOverlay');
+let fpTargetUserId = null;
+
+document.getElementById('forgotPinLink').addEventListener('click', ()=>{
+  const sel = document.getElementById('fp_user');
+  sel.innerHTML = DATA.users.map(u=>`<option value="${u.id}">${escapeHtml(u.name)}</option>`).join('');
+  document.getElementById('forgotPinStep1').style.display = 'block';
+  document.getElementById('forgotPinStep2').style.display = 'none';
+  document.getElementById('fp_error').textContent = '';
+  forgotPinModalOverlay.classList.add('open');
+});
+document.getElementById('fp_cancelBtn').addEventListener('click', ()=>{
+  forgotPinModalOverlay.classList.remove('open');
+});
+forgotPinModalOverlay.addEventListener('click', e=>{ if(e.target===forgotPinModalOverlay) forgotPinModalOverlay.classList.remove('open'); });
+
+document.getElementById('fp_sendCodeBtn').addEventListener('click', async ()=>{
+  const userId = document.getElementById('fp_user').value;
+  const u = getUserById(userId);
+  const errEl = document.getElementById('fp_error');
+  if(!u){ return; }
+  if(!u.email){
+    alert(`${u.name}にはメールアドレスが登録されていません。管理者に登録を依頼してください。`);
+    return;
+  }
+  const code = String(Math.floor(100000 + Math.random()*900000));
+  DATA.pendingResets = (DATA.pendingResets||[]).filter(r=>r.userId!==userId);
+  DATA.pendingResets.push({ id: uid(), userId, code, expiresAt: Date.now() + 10*60*1000 });
+  save();
+  fpTargetUserId = userId;
+  const sent = await sendEmailNotification(
+    u.email, u.name,
+    '【揉めない家計簿】暗証番号の再設定コード',
+    `${u.name}様\n\n暗証番号の再設定コードは次の通りです。\n\n確認コード：${code}\n\n10分以内に入力してください。このメールに心当たりがない場合は無視してください。`
+  );
+  document.getElementById('fp_sentNote').textContent = sent
+    ? `${u.email} に確認コードを送信しました。`
+    : `メール送信に失敗しました（EmailJSが未設定の可能性があります）。送信できた場合のコードは管理者に確認してください。`;
+  document.getElementById('forgotPinStep1').style.display = 'none';
+  document.getElementById('forgotPinStep2').style.display = 'block';
+  errEl.textContent = '';
+});
+
+document.getElementById('fp_confirmBtn').addEventListener('click', ()=>{
+  const errEl = document.getElementById('fp_error');
+  const code = document.getElementById('fp_code').value.trim();
+  const newPin = document.getElementById('fp_newPin').value.trim();
+  if(newPin.length < 4){ errEl.textContent = '新しい暗証番号は4桁以上で入力してください。'; return; }
+  const pending = (DATA.pendingResets||[]).find(r=>r.userId===fpTargetUserId);
+  if(!pending || pending.expiresAt < Date.now() || pending.code !== code){
+    errEl.textContent = '確認コードが正しくないか、有効期限が切れています。';
+    return;
+  }
+  const u = getUserById(fpTargetUserId);
+  if(!u){ errEl.textContent = 'ユーザーが見つかりません。'; return; }
+  u.pinHash = simpleHash(newPin);
+  DATA.pendingResets = DATA.pendingResets.filter(r=>r.userId!==fpTargetUserId);
+  save();
+  forgotPinModalOverlay.classList.remove('open');
+  alert('暗証番号を再設定しました。新しい暗証番号でログインしてください。');
+});
+
+/* ===================== EMAILJS（メール通知） ===================== */
+const EMAILJS_CONFIG = {
+  publicKey: '',     // ←EmailJSの Public Key を貼る
+  serviceId: '',     // ←EmailJSの Service ID を貼る
+  templateId: '',    // ←EmailJSの Template ID を貼る
+};
+let emailjsReady = false;
+function initEmailJS(){
+  try{
+    if(!window.emailjs || !EMAILJS_CONFIG.publicKey || !EMAILJS_CONFIG.serviceId || !EMAILJS_CONFIG.templateId){
+      emailjsReady = false;
+      return false;
+    }
+    emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });
+    emailjsReady = true;
+    return true;
+  }catch(e){
+    console.error('emailjs init error', e);
+    emailjsReady = false;
+    return false;
+  }
+}
+async function sendEmailNotification(toEmail, toName, subject, message){
+  if(!emailjsReady || !toEmail) return false;
+  try{
+    await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+      to_email: toEmail, to_name: toName, subject: subject, message: message,
+    });
+    return true;
+  }catch(e){
+    console.error('email send error', e);
+    return false;
+  }
+}
+
+/* ===================== 更新通知（共同利用者にメールで知らせる） ===================== */
+const notifyModalOverlay = document.getElementById('notifyModalOverlay');
+let notifyPendingMessage = null;
+
+function promptNotifyUsers(subject, message){
+  const candidates = DATA.users.filter(u=> u.id!==currentUserId && u.email);
+  if(candidates.length === 0 || !emailjsReady){
+    return; // 通知できる相手がいない／EmailJS未設定の場合は何もしない
+  }
+  notifyPendingMessage = { subject, message };
+  document.getElementById('notifyMessagePreview').textContent = message;
+  const list = document.getElementById('notifyUserList');
+  list.innerHTML = candidates.map(u=>`
+    <label class="exclude-checkbox">
+      <input type="checkbox" value="${u.id}" checked>
+      <span>${escapeHtml(u.name)}（${escapeHtml(u.email)}）</span>
+    </label>
+  `).join('');
+  notifyModalOverlay.classList.add('open');
+}
+document.getElementById('notifySendBtn').addEventListener('click', async ()=>{
+  if(!notifyPendingMessage) { notifyModalOverlay.classList.remove('open'); return; }
+  const checked = Array.from(document.querySelectorAll('#notifyUserList input:checked')).map(c=>c.value);
+  const targets = DATA.users.filter(u=>checked.includes(u.id));
+  notifyModalOverlay.classList.remove('open');
+  for(const u of targets){
+    await sendEmailNotification(u.email, u.name, notifyPendingMessage.subject, notifyPendingMessage.message);
+  }
+  notifyPendingMessage = null;
+});
+document.getElementById('notifySkipBtn').addEventListener('click', ()=>{
+  notifyModalOverlay.classList.remove('open');
+  notifyPendingMessage = null;
+});
+
+/* ===================== RATIO BAR (drag to adjust split) ===================== */
+function setupRatioBar(barEl, handleEl, segYEl, segMEl, pctYEl, pctMEl, opts){
+  opts = opts || {};
+  let dragging = false;
+  function render(pct){
+    pct = Math.max(0, Math.min(100, Math.round(pct)));
+    segYEl.style.width = pct + '%';
+    segMEl.style.width = (100-pct) + '%';
+    handleEl.style.left = pct + '%';
+    segYEl.textContent = '勇治 ' + pct + '%';
+    segMEl.textContent = '美香 ' + (100-pct) + '%';
+    pctYEl.textContent = '勇治 ' + pct + '%';
+    pctMEl.textContent = '美香 ' + (100-pct) + '%';
+    return pct;
+  }
+  function pctFromEvent(evt){
+    const rect = barEl.getBoundingClientRect();
+    const clientX = (evt.touches && evt.touches[0]) ? evt.touches[0].clientX : evt.clientX;
+    return Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+  }
+  function start(evt){
+    if(opts.isLocked && opts.isLocked()) return;
+    dragging = true;
+    apply(evt);
+    evt.preventDefault();
+  }
+  function apply(evt){
+    if(!dragging) return;
+    const pct = render(pctFromEvent(evt));
+    if(opts.onChange) opts.onChange(pct);
+  }
+  function endDrag(){ dragging = false; }
+  barEl.addEventListener('mousedown', start);
+  window.addEventListener('mousemove', apply);
+  window.addEventListener('mouseup', endDrag);
+  barEl.addEventListener('touchstart', start, {passive:false});
+  barEl.addEventListener('touchmove', apply, {passive:false});
+  barEl.addEventListener('touchend', endDrag);
+  barEl.addEventListener('click', evt=>{
+    if(opts.isLocked && opts.isLocked()) return;
+    const pct = render(pctFromEvent(evt));
+    if(opts.onChange) opts.onChange(pct);
+  });
+  render(50);
+  barEl.classList.toggle('locked', !!(opts.isLocked && opts.isLocked()));
+  return { setPct: p=>render(p) };
+}
+
+/* ===================== TABS ===================== */
+const tabButtons = document.querySelectorAll('nav.tabs button');
+const tabSections = {
+  entries: document.getElementById('tab-entries'),
+  fixed: document.getElementById('tab-fixed'),
+  settle: document.getElementById('tab-settle'),
+  settings: document.getElementById('tab-settings'),
+};
+tabButtons.forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    tabButtons.forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    Object.values(tabSections).forEach(s=>s.style.display='none');
+    tabSections[btn.dataset.tab].style.display='block';
+    if(btn.dataset.tab==='fixed') renderFixed();
+    if(btn.dataset.tab==='settle') renderSettle();
+  });
+});
+
+/* ===================== SELECT POPULATION ===================== */
+function populateSelect(sel, list, withAddOption){
+  sel.innerHTML = '';
+  list.forEach(v=>{
+    const opt = document.createElement('option');
+    opt.value = v; opt.textContent = v;
+    sel.appendChild(opt);
+  });
+}
+
+function refreshDropdowns(){
+  populateSelect(document.getElementById('f_category'), DATA.categories);
+  populateSelect(document.getElementById('e_category'), DATA.categories);
+  populateSelect(document.getElementById('f_person'), DATA.persons);
+  populateSelect(document.getElementById('e_person'), DATA.persons);
+  const dl = document.getElementById('itemList');
+  dl.innerHTML='';
+  DATA.items.forEach(v=>{
+    const opt = document.createElement('option');
+    opt.value = v;
+    dl.appendChild(opt);
+  });
+}
+
+function rememberItem(name){
+  if(name && !DATA.items.includes(name)){
+    DATA.items.push(name);
+  }
+}
+
+/* ===================== BALANCE ===================== */
+function computeBalance(){
+  // positive = mika owes yuji ; negative = yuji owes mika
+  let bal = 0;
+  DATA.entries.forEach(e=>{
+    if(e.excluded || e.settled) return;
+    const paidMika = e.paidMika != null ? e.paidMika : 0;
+    bal += (e.mika||0) - paidMika;
+  });
+  DATA.fixedPayments.forEach(p=>{
+    if(p.status==='paid'){ bal += (p.mika||0); }
+  });
+  DATA.settlements.forEach(s=>{
+    if(s.direction==='mika_to_yuji') bal -= s.amount;
+    else bal += s.amount;
+  });
+  return bal;
+}
+
+function renderBalance(){
+  const bal = computeBalance();
+  const banners = [
+    {el: document.getElementById('balanceBanner'), amt: document.getElementById('balanceAmount'), sub: document.getElementById('balanceSub')},
+    {el: document.getElementById('balanceBanner2'), amt: document.getElementById('balanceAmount2'), sub: document.getElementById('balanceSub2')},
+  ];
+  banners.forEach(b=>{
+    b.el.classList.remove('mika-owes','yuji-owes','flat');
+    if(Math.abs(bal) < 1){
+      b.el.classList.add('flat');
+      b.amt.textContent = '¥0';
+      b.sub.textContent = '今のところ精算は不要です';
+    } else if(bal > 0){
+      b.el.classList.add('mika-owes');
+      b.amt.textContent = yen(bal);
+      b.sub.textContent = '美香 → 勇治 へ支払いが必要です';
+    } else {
+      b.el.classList.add('yuji-owes');
+      b.amt.textContent = yen(Math.abs(bal));
+      b.sub.textContent = '勇治 → 美香 へ支払いが必要です';
+    }
+  });
+}
+
+/* ===================== ENTRIES ===================== */
+const entryForm = document.getElementById('entryForm');
+const f_total = document.getElementById('f_total');
+const f_yuji = document.getElementById('f_yuji');
+const f_mika = document.getElementById('f_mika');
+const f_paid_yuji = document.getElementById('f_paid_yuji');
+const f_paid_mika = document.getElementById('f_paid_mika');
+
+function autoSplit(totalEl, yujiEl, mikaEl, catEl){
+  totalEl.addEventListener('input', ()=>{
+    const t = parseFloat(totalEl.value);
+    if(isNaN(t)) return;
+    const y = parseFloat(yujiEl.value);
+    const m = parseFloat(mikaEl.value);
+    if(!isNaN(y) && isNaN(m)) mikaEl.value = t - y;
+    else if(isNaN(y) && !isNaN(m)) yujiEl.value = t - m;
+    else if(isNaN(y) && isNaN(m)){
+      // both empty: use category default ratio if available, otherwise full to yuji
+      if(catEl && catEl.value){
+        const pct = getCategoryRatio(catEl.value);
+        const yAmt = Math.round(t * pct / 100);
+        yujiEl.value = yAmt; mikaEl.value = t - yAmt;
+      } else {
+        yujiEl.value = t;
+      }
+    }
+  });
+  yujiEl.addEventListener('input', ()=>{
+    const t = parseFloat(totalEl.value);
+    const y = parseFloat(yujiEl.value);
+    if(!isNaN(t) && !isNaN(y)) mikaEl.value = t - y;
+  });
+  mikaEl.addEventListener('input', ()=>{
+    const t = parseFloat(totalEl.value);
+    const m = parseFloat(mikaEl.value);
+    if(!isNaN(t) && !isNaN(m)) yujiEl.value = t - m;
+  });
+}
+autoSplit(f_total, f_yuji, f_mika, document.getElementById('f_category'));
+autoSplit(document.getElementById('e_total'), document.getElementById('e_yuji'), document.getElementById('e_mika'), document.getElementById('e_category'));
+autoSplit(f_total, f_paid_yuji, f_paid_mika, null);
+autoSplit(document.getElementById('e_total'), document.getElementById('e_paid_yuji'), document.getElementById('e_paid_mika'), null);
+
+function diffInfo(burdenMika, paidMika){
+  const diff = burdenMika - paidMika;
+  if(Math.abs(diff) < 1) return { text: '差額なし（肩代わり額と負担額が一致しています）', cls: '' };
+  if(diff > 0) return { text: `今回の差額：美香 → 勇治　${yen(diff)}`, cls: 'to-yuji' };
+  return { text: `今回の差額：勇治 → 美香　${yen(Math.abs(diff))}`, cls: 'to-mika' };
+}
+function updateFDiffNote(){
+  const burdenMika = parseFloat(f_mika.value) || 0;
+  const paidMika = parseFloat(f_paid_mika.value) || 0;
+  const info = diffInfo(burdenMika, paidMika);
+  const el = document.getElementById('f_diff_note');
+  el.textContent = info.text;
+  el.classList.remove('to-yuji','to-mika');
+  if(info.cls) el.classList.add(info.cls);
+}
+['f_yuji','f_mika','f_paid_yuji','f_paid_mika'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', updateFDiffNote);
+});
+document.querySelectorAll('[data-paid]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const t = parseFloat(f_total.value) || 0;
+    if(btn.dataset.paid==='yuji100'){ f_paid_yuji.value=t; f_paid_mika.value=0; }
+    if(btn.dataset.paid==='mika100'){ f_paid_yuji.value=0; f_paid_mika.value=t; }
+    if(btn.dataset.paid==='half'){ f_paid_yuji.value=Math.round(t/2); f_paid_mika.value=t-Math.round(t/2); }
+    updateFDiffNote();
+  });
+});
+
+/* ---- シンプルな「先払いしたのはどちら？」トグル ---- */
+let fPaidWho = 'yuji';
+let fPaidManual = false;
+function updateFPaidToggleUI(){
+  document.querySelectorAll('#f_paid_toggle button').forEach(b=>{
+    b.classList.toggle('sel-yuji', b.dataset.paidwho==='yuji' && fPaidWho==='yuji');
+    b.classList.toggle('sel-mika', b.dataset.paidwho==='mika' && fPaidWho==='mika');
+  });
+}
+function applyFPaidWho(){
+  const t = parseFloat(f_total.value) || 0;
+  if(fPaidWho==='yuji'){ f_paid_yuji.value = t; f_paid_mika.value = 0; }
+  else { f_paid_yuji.value = 0; f_paid_mika.value = t; }
+  updateFPaidToggleUI();
+  updateFDiffNote();
+}
+document.querySelectorAll('#f_paid_toggle button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    fPaidWho = btn.dataset.paidwho;
+    fPaidManual = false;
+    document.getElementById('f_paid_detail').style.display = 'none';
+    document.getElementById('f_paid_detail_toggle').textContent = '金額を個別に指定する（折半で立て替えた場合など）▾';
+    applyFPaidWho();
+  });
+});
+document.getElementById('f_paid_detail_toggle').addEventListener('click', ()=>{
+  const detail = document.getElementById('f_paid_detail');
+  const open = detail.style.display !== 'none';
+  detail.style.display = open ? 'none' : 'block';
+  document.getElementById('f_paid_detail_toggle').textContent = open
+    ? '金額を個別に指定する（折半で立て替えた場合など）▾'
+    : '金額を個別に指定する（折半で立て替えた場合など）▴';
+  if(!open){
+    fPaidManual = true;
+    document.querySelectorAll('#f_paid_toggle button').forEach(b=>b.classList.remove('sel-yuji','sel-mika'));
+  }
+});
+f_total.addEventListener('input', ()=>{ if(!fPaidManual) applyFPaidWho(); });
+[f_paid_yuji, f_paid_mika].forEach(el=> el.addEventListener('input', ()=>{ fPaidManual = true; }));
+applyFPaidWho();
+
+const eBar = setupRatioBar(
+  document.getElementById('e_ratio_bar'), document.getElementById('e_bar_handle'),
+  document.getElementById('e_bar_y'), document.getElementById('e_bar_m'),
+  document.getElementById('e_bar_y_pct'), document.getElementById('e_bar_m_pct'),
+  { onChange: pct=>{
+      const e_total = document.getElementById('e_total');
+      const e_yuji = document.getElementById('e_yuji');
+      const e_mika = document.getElementById('e_mika');
+      const t = parseFloat(e_total.value) || 0;
+      const yAmt = Math.round(t * pct / 100);
+      e_yuji.value = yAmt; e_mika.value = t - yAmt;
+      updateEDiffNote();
+    } }
+);
+function syncEBarFromFields(){
+  const t = parseFloat(document.getElementById('e_total').value) || 0;
+  const y = parseFloat(document.getElementById('e_yuji').value) || 0;
+  const pct = t > 0 ? (y/t)*100 : 50;
+  eBar.setPct(pct);
+  updateEDiffNote();
+}
+['e_total','e_yuji','e_mika'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', syncEBarFromFields);
+});
+function updateEDiffNote(){
+  const burdenMika = parseFloat(document.getElementById('e_mika').value) || 0;
+  const paidMika = parseFloat(document.getElementById('e_paid_mika').value) || 0;
+  const info = diffInfo(burdenMika, paidMika);
+  const el = document.getElementById('e_diff_note');
+  el.textContent = info.text;
+  el.classList.remove('to-yuji','to-mika');
+  if(info.cls) el.classList.add(info.cls);
+}
+['e_paid_yuji','e_paid_mika'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', updateEDiffNote);
+});
+document.querySelectorAll('[data-epaid]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const t = parseFloat(document.getElementById('e_total').value) || 0;
+    const e_paid_yuji = document.getElementById('e_paid_yuji');
+    const e_paid_mika = document.getElementById('e_paid_mika');
+    if(btn.dataset.epaid==='yuji100'){ e_paid_yuji.value=t; e_paid_mika.value=0; }
+    if(btn.dataset.epaid==='mika100'){ e_paid_yuji.value=0; e_paid_mika.value=t; }
+    if(btn.dataset.epaid==='half'){ e_paid_yuji.value=Math.round(t/2); e_paid_mika.value=t-Math.round(t/2); }
+    updateEDiffNote();
+  });
+});
+
+/* ---- シンプルな「先払いしたのはどちら？」トグル（編集モーダル） ---- */
+let ePaidWho = 'yuji';
+let ePaidManual = false;
+function updateEPaidToggleUI(){
+  document.querySelectorAll('#e_paid_toggle button').forEach(b=>{
+    b.classList.toggle('sel-yuji', b.dataset.paidwho==='yuji' && ePaidWho==='yuji');
+    b.classList.toggle('sel-mika', b.dataset.paidwho==='mika' && ePaidWho==='mika');
+  });
+}
+function applyEPaidWho(){
+  const t = parseFloat(document.getElementById('e_total').value) || 0;
+  const e_paid_yuji = document.getElementById('e_paid_yuji');
+  const e_paid_mika = document.getElementById('e_paid_mika');
+  if(ePaidWho==='yuji'){ e_paid_yuji.value = t; e_paid_mika.value = 0; }
+  else { e_paid_yuji.value = 0; e_paid_mika.value = t; }
+  updateEPaidToggleUI();
+  updateEDiffNote();
+}
+document.querySelectorAll('#e_paid_toggle button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    ePaidWho = btn.dataset.paidwho;
+    ePaidManual = false;
+    document.getElementById('e_paid_detail').style.display = 'none';
+    document.getElementById('e_paid_detail_toggle').textContent = '金額を個別に指定する（折半で立て替えた場合など）▾';
+    applyEPaidWho();
+  });
+});
+document.getElementById('e_paid_detail_toggle').addEventListener('click', ()=>{
+  const detail = document.getElementById('e_paid_detail');
+  const open = detail.style.display !== 'none';
+  detail.style.display = open ? 'none' : 'block';
+  document.getElementById('e_paid_detail_toggle').textContent = open
+    ? '金額を個別に指定する（折半で立て替えた場合など）▾'
+    : '金額を個別に指定する（折半で立て替えた場合など）▴';
+  if(!open){
+    ePaidManual = true;
+    document.querySelectorAll('#e_paid_toggle button').forEach(b=>b.classList.remove('sel-yuji','sel-mika'));
+  }
+});
+document.getElementById('e_total').addEventListener('input', ()=>{ if(!ePaidManual) applyEPaidWho(); });
+['e_paid_yuji','e_paid_mika'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', ()=>{ ePaidManual = true; });
+});
+
+const fBar = setupRatioBar(
+  document.getElementById('f_ratio_bar'), document.getElementById('f_bar_handle'),
+  document.getElementById('f_bar_y'), document.getElementById('f_bar_m'),
+  document.getElementById('f_bar_y_pct'), document.getElementById('f_bar_m_pct'),
+  { onChange: pct=>{
+      const t = parseFloat(f_total.value) || 0;
+      const yAmt = Math.round(t * pct / 100);
+      f_yuji.value = yAmt; f_mika.value = t - yAmt;
+      updateFDiffNote();
+    } }
+);
+function syncFBarFromFields(){
+  const t = parseFloat(f_total.value) || 0;
+  const y = parseFloat(f_yuji.value) || 0;
+  const pct = t > 0 ? (y/t)*100 : 50;
+  fBar.setPct(pct);
+  updateFDiffNote();
+}
+['f_total','f_yuji','f_mika'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', syncFBarFromFields);
+});
+
+document.getElementById('f_category').addEventListener('change', ()=>{
+  const hint = document.getElementById('f_ratio_hint');
+  const pct = getCategoryRatio(document.getElementById('f_category').value);
+  hint.textContent = `「${document.getElementById('f_category').value}」のデフォルト割合：勇治${pct}% ／ 美香${100-pct}%（「カテゴリの規定割合」ボタンで反映できます）`;
+});
+
+document.querySelectorAll('[data-split]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const t = parseFloat(f_total.value) || 0;
+    if(btn.dataset.split==='yuji100'){ f_yuji.value=t; f_mika.value=0; }
+    if(btn.dataset.split==='mika100'){ f_yuji.value=0; f_mika.value=t; }
+    if(btn.dataset.split==='half'){ f_yuji.value=Math.round(t/2); f_mika.value=t-Math.round(t/2); }
+    if(btn.dataset.split==='catdefault'){
+      const pct = getCategoryRatio(document.getElementById('f_category').value);
+      const yAmt = Math.round(t * pct / 100);
+      f_yuji.value = yAmt; f_mika.value = t - yAmt;
+    }
+    syncFBarFromFields();
+  });
+});
+
+entryForm.addEventListener('submit', e=>{
+  e.preventDefault();
+  const yujiVal = parseFloat(f_yuji.value) || 0;
+  const mikaVal = parseFloat(f_mika.value) || 0;
+  const paidYujiVal = parseFloat(f_paid_yuji.value) || 0;
+  const paidMikaVal = parseFloat(f_paid_mika.value) || 0;
+  const entry = {
+    id: uid(),
+    date: document.getElementById('f_date').value,
+    category: document.getElementById('f_category').value,
+    person: document.getElementById('f_person').value,
+    item: document.getElementById('f_item').value.trim(),
+    total: parseFloat(f_total.value) || 0,
+    paidYuji: paidYujiVal,
+    paidMika: paidMikaVal,
+    yuji: yujiVal,
+    mika: mikaVal,
+    recordedYuji: yujiVal,
+    recordedMika: mikaVal,
+    excluded: document.getElementById('f_excluded').checked,
+    confirmed: false,
+    confirmedAt: null,
+    confirmedBy: null,
+    createdBy: currentUser,
+    lastModifiedBy: currentUser,
+    confirmedBy: [currentUser],
+    createdAt: Date.now(),
+    memo: document.getElementById('f_memo').value.trim(),
+  };
+  if(!entry.item){ alert('項目名を入力してください'); return; }
+  DATA.entries.push(entry);
+  rememberItem(entry.item);
+  save();
+  entryForm.reset();
+  document.getElementById('f_date').value = todayStr();
+  document.getElementById('f_ratio_hint').textContent = 'カテゴリを選ぶと、設定したデフォルトの分担割合が自動で入ります。';
+  fBar.setPct(50);
+  fPaidWho = 'yuji';
+  fPaidManual = false;
+  document.getElementById('f_paid_detail').style.display = 'none';
+  document.getElementById('f_paid_detail_toggle').textContent = '金額を個別に指定する（折半で立て替えた場合など）▾';
+  applyFPaidWho();
+  refreshDropdowns();
+  renderEntries();
+  renderBalance();
+  renderSummary();
+  promptNotifyUsers(
+    '【揉めない家計簿】新しい支払い記録',
+    `新しい支払い記録「${entry.item}」が追加されました。精算時の負担割合をご確認のうえ、確認ボタンで確定してください。`
+  );
+});
+
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+function monthKey(dateStr){
+  return dateStr ? dateStr.slice(0,7) : '';
+}
+
+function populateMonthFilter(){
+  const sel = document.getElementById('filterMonth');
+  const months = Array.from(new Set(DATA.entries.map(e=>monthKey(e.date)))).sort().reverse();
+  const prevVal = sel.value;
+  sel.innerHTML = '<option value="">すべての月</option>';
+  months.forEach(m=>{
+    if(!m) return;
+    const opt = document.createElement('option');
+    opt.value = m; opt.textContent = m.replace('-','年')+'月';
+    sel.appendChild(opt);
+  });
+  if(months.includes(prevVal)) sel.value = prevVal;
+}
+document.getElementById('filterMonth').addEventListener('change', renderEntries);
+
+function renderEntries(){
+  populateMonthFilter();
+  const filter = document.getElementById('filterMonth').value;
+  const list = document.getElementById('entryList');
+  let entries = DATA.entries.slice().sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+  if(filter) entries = entries.filter(e=>monthKey(e.date)===filter);
+
+  if(entries.length===0){
+    list.innerHTML = '<div class="empty-state">記録がまだありません</div>';
+  } else {
+    list.innerHTML = entries.map(e=>{
+      const d = e.date ? e.date.slice(5).replace('-','/') : '--';
+      return `<div class="entry-row-wrap ${e.excluded?'excluded-row':''} ${e.settled?'settled-row':''}">
+        <div class="entry" data-id="${e.id}">
+          <div class="entry-head">
+            <span class="date">${d}</span>
+            <span class="item-name">${escapeHtml(e.item)}</span>
+          </div>
+          <div class="tags">
+              ${e.category ? `<span class="tag">${escapeHtml(e.category)}</span>`:''}
+              ${e.person ? `<span class="tag">${escapeHtml(e.person)}</span>`:''}
+              ${e.excluded ? `<span class="tag excluded-tag">共同除外</span>`:''}
+              ${e.settled ? `<span class="tag settled-tag">精算済み</span>`:''}
+          </div>
+          <div class="nums">
+            ${entryNumsHtml(e)}
+          </div>
+        </div>
+        <div class="entry-row-btns">
+          <button type="button" class="confirm-btn ${confirmBtnClass(e)}" data-confirm-id="${e.id}">${confirmBtnLabel(e)}</button>
+          <button type="button" class="exclude-btn ${e.excluded?'active':''}" data-exclude-id="${e.id}">${e.excluded?'除外中':'除外'}</button>
+        </div>
+      </div>`;
+    }).join('');
+    list.querySelectorAll('.entry').forEach(el=>{
+      el.addEventListener('click', ()=> openEditModal(el.dataset.id));
+    });
+    list.querySelectorAll('.confirm-btn').forEach(btn=>{
+      btn.addEventListener('click', e=>{
+        e.stopPropagation();
+        openConfirmModal(btn.dataset.confirmId);
+      });
+    });
+    list.querySelectorAll('.exclude-btn').forEach(btn=>{
+      btn.addEventListener('click', e=>{
+        e.stopPropagation();
+        const entry = DATA.entries.find(x=>x.id===btn.dataset.excludeId);
+        if(!entry) return;
+        entry.excluded = !entry.excluded;
+        save();
+        renderEntries();
+        renderBalance();
+        renderSummary();
+      });
+    });
+  }
+
+  const totals = entries.reduce((acc,e)=>{
+    acc.total += e.total||0; acc.yuji += e.yuji||0; acc.mika += e.mika||0; return acc;
+  }, {total:0,yuji:0,mika:0});
+  document.getElementById('entryTotals').innerHTML = `
+    <div><div class="num">${yen(totals.total)}</div><div class="lbl">総計</div></div>
+    <div><div class="num" style="color:var(--yuji)">${yen(totals.yuji)}</div><div class="lbl">勇治分担</div></div>
+    <div><div class="num" style="color:var(--mika)">${yen(totals.mika)}</div><div class="lbl">美香分担</div></div>
+  `;
+}
+
+function iSelfConfirmed(e){
+  // confirmedByプロパティ未設定 = 旧データ → 確認不要
+  if(e.confirmedBy === undefined || e.confirmedBy === null) return false;
+  // confirmedByに自分が含まれる
+  if(e.confirmedBy.indexOf(currentUser) >= 0) return true;
+  // confirmedBy=[]（空）かつlastModifiedBy=自分 → 入力者として判定
+  if(e.confirmedBy.length === 0 && e.lastModifiedBy === currentUser) return true;
+  return false;
+}
+// 現在ユーザーの表示名を取得
+function myName(){ var u=(DATA.users||[]).find(function(u){return u.id===currentUser;}); return u?u.name:'自分'; }
+// 相手ユーザーの表示名を取得
+function otherName(){ var u=(DATA.users||[]).find(function(u){return u.id!==currentUser;}); return u?u.name:'相手'; }
+
+function confirmBtnClass(e){
+  if(e.confirmed) return 'done';
+  if(iSelfConfirmed(e)) return 'waiting';
+  return 'pending';
+}
+function confirmBtnLabel(e){
+  if(e.confirmed) return '確定済み';
+  // confirmedByがある場合のみ確認待ち表示（旧データは通常の「確認」ボタン）
+  if(e.confirmedBy === undefined || e.confirmedBy === null) return '確認';
+  if(iSelfConfirmed(e)) return otherName()+'の確認待ち';
+  return '確認';
+}
+
+function entryNumsHtml(e){
+  const total = e.total || 0;
+  const paidYuji = e.paidYuji != null ? e.paidYuji : total;
+  const paidMika = e.paidMika != null ? e.paidMika : 0;
+  const burdenYujiPct = total > 0 ? Math.round(((e.yuji||0) / total) * 100) : 50;
+  const diff = (e.mika||0) - paidMika;
+  let diffHtml = '';
+  if(Math.abs(diff) >= 1){
+    diffHtml = diff > 0
+      ? `<div class="row-diff to-yuji">差額 美→勇 ${yen(diff)}</div>`
+      : `<div class="row-diff to-mika">差額 勇→美 ${yen(Math.abs(diff))}</div>`;
+  }
+  return `
+    <div class="total">${yen(total)}</div>
+    <div class="paid-line">先払い　勇${yen(paidYuji)} / 美${yen(paidMika)}</div>
+    <div class="mini-bar" title="負担割合 勇治${burdenYujiPct}% / 美香${100-burdenYujiPct}%">
+      <div class="mb-y" style="width:${burdenYujiPct}%"></div><div class="mb-m" style="width:${100-burdenYujiPct}%"></div>
+    </div>
+    ${diffHtml}
+  `;
+}
+
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ---- ratio confirm modal ---- */
+const confirmModalOverlay = document.getElementById('confirmModalOverlay');
+let confirmTargetId = null;
+
+const cBar = setupRatioBar(
+  document.getElementById('c_ratio_bar'), document.getElementById('c_bar_handle'),
+  document.getElementById('c_bar_y'), document.getElementById('c_bar_m'),
+  document.getElementById('c_bar_y_pct'), document.getElementById('c_bar_m_pct'),
+  { onChange: pct=>{
+      const e = DATA.entries.find(x=>x.id===confirmTargetId);
+      if(!e) return;
+      const total = e.total || ((parseFloat(document.getElementById('c_yuji').value)||0) + (parseFloat(document.getElementById('c_mika').value)||0));
+      const yAmt = Math.round(total * pct / 100);
+      document.getElementById('c_yuji').value = yAmt;
+      document.getElementById('c_mika').value = total - yAmt;
+      updateConfirmDiffNote(e);
+    } }
+);
+
+function isConfirmLockedForMe(e){
+  return !e.confirmed && e.lastModifiedBy && e.lastModifiedBy === currentUser;
+}
+
+function openConfirmModal(id){
+  const e = DATA.entries.find(x=>x.id===id);
+  if(!e) return;
+  confirmTargetId = id;
+  document.getElementById('confirmItemInfo').textContent =
+    `${e.date||''}　${e.item}　総計 ${yen(e.total)}（カテゴリ：${e.category||'未設定'}）`;
+  document.getElementById('c_yuji').value = e.yuji;
+  document.getElementById('c_mika').value = e.mika;
+  const total = e.total || (e.yuji + e.mika) || 0;
+  const pct = total > 0 ? Math.round((e.yuji/total)*100) : getCategoryRatio(e.category);
+  cBar.setPct(pct);
+  updateConfirmDiffNote(e);
+
+  const lockNote = document.getElementById('confirmLockNote');
+  const confirmBtn = document.getElementById('confirmRatioBtn');
+  if(iSelfConfirmed(e)){
+    // 自分が入力者 → 相手の確認を待つ
+    lockNote.style.display = 'block';
+    lockNote.classList.remove('ok');
+    lockNote.textContent = 'この項目は'+myName()+'が入力・変更したため、'+otherName()+'が確認してください。';
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = otherName()+'のみ確定できます';
+  } else {
+    lockNote.style.display = e.lastModifiedBy ? 'block' : 'none';
+    if(e.lastModifiedBy){
+      lockNote.classList.add('ok');
+      lockNote.textContent = e.confirmed
+        ? `${roleLabel(e.confirmedBy)}が確定済みです。変更すると再確認が必要になります。`
+        : `${roleLabel(e.lastModifiedBy)}が入力した内容です。確定してよければボタンを押してください。`;
+    }
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = 'この割合で確定する';
+  }
+  confirmModalOverlay.classList.add('open');
+}
+
+function updateConfirmDiffNote(e){
+  const m = parseFloat(document.getElementById('c_mika').value) || 0;
+  const diff = m - (e.recordedMika!=null ? e.recordedMika : e.mika);
+  const note = document.getElementById('confirmDiffNote');
+  if(Math.abs(diff) < 1){
+    note.textContent = '最初に記録した分担額と同じです。';
+  } else if(diff > 0){
+    note.textContent = `最初の記録より美香の分担が ${yen(diff)} 増えます（追加で美香→勇治に必要）。`;
+  } else {
+    note.textContent = `最初の記録より美香の分担が ${yen(Math.abs(diff))} 減ります（勇治→美香の調整が必要）。`;
+  }
+}
+
+['c_yuji','c_mika'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', ()=>{
+    const e = DATA.entries.find(x=>x.id===confirmTargetId);
+    if(!e) return;
+    const y = parseFloat(document.getElementById('c_yuji').value)||0;
+    const m = parseFloat(document.getElementById('c_mika').value)||0;
+    const total = y+m;
+    if(total>0) cBar.setPct((y/total)*100);
+    updateConfirmDiffNote(e);
+  });
+});
+
+function applyCurrentSplitToEntry(e){
+  e.yuji = parseFloat(document.getElementById('c_yuji').value) || 0;
+  e.mika = parseFloat(document.getElementById('c_mika').value) || 0;
+}
+
+document.getElementById('savePendingBtn').addEventListener('click', ()=>{
+  const e = DATA.entries.find(x=>x.id===confirmTargetId);
+  if(!e || !currentUser) return;
+  applyCurrentSplitToEntry(e);
+  e.confirmed = false;
+  e.confirmedBy = null;
+  e.lastModifiedBy = currentUser;
+  save();
+  confirmModalOverlay.classList.remove('open');
+  renderEntries();
+  renderBalance();
+  renderSummary();
+  if(recentModalOverlay.classList.contains('open')) renderRecentList();
+});
+
+document.getElementById('confirmRatioBtn').addEventListener('click', ()=>{
+  const e = DATA.entries.find(x=>x.id===confirmTargetId);
+  if(!e || !currentUser) return;
+  if(isConfirmLockedForMe(e)) return; // safety guard
+  applyCurrentSplitToEntry(e);
+  e.confirmed = true;
+  e.confirmedAt = Date.now();
+  e.confirmedBy = currentUser;
+  save();
+  confirmModalOverlay.classList.remove('open');
+  renderEntries();
+  renderBalance();
+  renderSummary();
+  if(recentModalOverlay.classList.contains('open')) renderRecentList();
+});
+document.getElementById('cancelConfirmBtn').addEventListener('click', ()=>{
+  confirmModalOverlay.classList.remove('open');
+});
+confirmModalOverlay.addEventListener('click', e=>{ if(e.target===confirmModalOverlay) confirmModalOverlay.classList.remove('open'); });
+
+/* ---- recent items modal ---- */
+const recentModalOverlay = document.getElementById('recentModalOverlay');
+document.getElementById('recentItemsBtn').addEventListener('click', ()=>{
+  renderRecentList();
+  recentModalOverlay.classList.add('open');
+});
+recentModalOverlay.addEventListener('click', e=>{ if(e.target===recentModalOverlay) recentModalOverlay.classList.remove('open'); });
+
+function renderRecentList(){
+  const wrap = document.getElementById('recentList');
+  const items = DATA.entries.slice()
+    .sort((a,b)=> (b.createdAt||0) - (a.createdAt||0))
+    .slice(0,15);
+  if(items.length===0){
+    wrap.innerHTML = '<div class="empty-state">記録がまだありません</div>';
+    return;
+  }
+  wrap.innerHTML = items.map(e=>{
+    const d = e.date ? e.date.slice(5).replace('-','/') : '--';
+    return `<div class="entry-row-wrap ${e.excluded?'excluded-row':''} ${e.settled?'settled-row':''}">
+      <div class="entry" data-id="${e.id}">
+        <div class="entry-head">
+          <span class="date">${d}</span>
+          <span class="item-name">${escapeHtml(e.item)}</span>
+        </div>
+        <div class="tags">
+            ${e.category ? `<span class="tag">${escapeHtml(e.category)}</span>`:''}
+            ${e.excluded ? `<span class="tag excluded-tag">共同除外</span>`:''}
+            ${e.settled ? `<span class="tag settled-tag">精算済み</span>`:''}
+        </div>
+        <div class="nums">
+          ${entryNumsHtml(e)}
+        </div>
+      </div>
+      <button type="button" class="confirm-btn ${confirmBtnClass(e)}" data-confirm-id="${e.id}">${confirmBtnLabel(e)}</button>
+    </div>`;
+  }).join('');
+  wrap.querySelectorAll('.entry').forEach(el=>{
+    el.addEventListener('click', ()=>{ recentModalOverlay.classList.remove('open'); openEditModal(el.dataset.id); });
+  });
+  wrap.querySelectorAll('.confirm-btn').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      e.stopPropagation();
+      openConfirmModal(btn.dataset.confirmId);
+    });
+  });
+}
+
+/* ---- period summary ---- */
+function populateSummaryPeriods(){
+  const sel = document.getElementById('summaryPeriod');
+  const months = Array.from(new Set(DATA.entries.map(e=>monthKey(e.date)))).filter(Boolean).sort().reverse();
+  const prevVal = sel.value;
+  sel.innerHTML = '<option value="">全期間</option>';
+  months.forEach(m=>{
+    const opt = document.createElement('option');
+    opt.value = m; opt.textContent = m.replace('-','年')+'月';
+    sel.appendChild(opt);
+  });
+  if(prevVal && (months.includes(prevVal) || prevVal==='')) sel.value = prevVal;
+}
+document.getElementById('summaryPeriod').addEventListener('change', renderSummary);
+
+function renderSummary(){
+  populateSummaryPeriods();
+  const period = document.getElementById('summaryPeriod').value;
+  let allEntries = DATA.entries.slice();
+  if(period) allEntries = allEntries.filter(e=>monthKey(e.date)===period);
+
+  const excludedEntries = allEntries.filter(e=>e.excluded);
+  const entries = allEntries.filter(e=>!e.excluded);
+
+  const totals = entries.reduce((acc,e)=>{
+    acc.total += e.total||0; acc.yuji += e.yuji||0; acc.mika += e.mika||0; return acc;
+  }, {total:0,yuji:0,mika:0});
+  const yPct = totals.total>0 ? Math.round((totals.yuji/totals.total)*100) : 0;
+  const mPct = totals.total>0 ? 100-yPct : 0;
+
+  document.getElementById('sumTotal').textContent = yen(totals.total);
+  document.getElementById('sumYuji').textContent = yen(totals.yuji);
+  document.getElementById('sumMika').textContent = yen(totals.mika);
+  document.getElementById('sumYujiPct').textContent = `勇治分担 ${yPct}%`;
+  document.getElementById('sumMikaPct').textContent = `美香分担 ${mPct}%`;
+
+  // 未精算 = 確定によって生じた差分（recordedMikaとの差）の合計（精算完了済みは除外）
+  const unsettledOnly = entries.filter(e=>!e.settled);
+  const adjDiff = unsettledOnly.reduce((s,e)=>{
+    if(e.confirmed && e.recordedMika!=null){ return s + (e.mika - e.recordedMika); }
+    return s;
+  }, 0);
+  const pendingCount = unsettledOnly.filter(e=>!e.confirmed).length;
+
+  const strip = document.getElementById('unsettledStrip');
+  strip.textContent = `未精算金額（割合確定による差分）：${yen(adjDiff)}／未確認の項目：${pendingCount}件`;
+  if(Math.abs(adjDiff) < 1 && pendingCount === 0){
+    strip.classList.add('zero');
+  } else {
+    strip.classList.remove('zero');
+  }
+
+  // 肩代わり額（実際に支払った額）と負担額の差額合計＝精算が必要な金額（精算完了済みは除外）
+  const payDiff = unsettledOnly.reduce((s,e)=>{
+    const paidMika = e.paidMika != null ? e.paidMika : 0;
+    return s + ((e.mika||0) - paidMika);
+  }, 0);
+  const diffStrip = document.getElementById('diffStrip');
+  if(Math.abs(payDiff) < 1){
+    diffStrip.textContent = '肩代わり額との差額合計：¥0（立て替えと負担額が一致しています）';
+    diffStrip.classList.add('zero');
+  } else if(payDiff > 0){
+    diffStrip.textContent = `肩代わり額との差額合計：美香 → 勇治　${yen(payDiff)}`;
+    diffStrip.classList.remove('zero');
+  } else {
+    diffStrip.textContent = `肩代わり額との差額合計：勇治 → 美香　${yen(Math.abs(payDiff))}`;
+    diffStrip.classList.remove('zero');
+  }
+
+  // 共同除外された支払い（参考表示のみ、計算には含まれない）
+  const excludedStrip = document.getElementById('excludedStrip');
+  if(excludedEntries.length > 0){
+    const excludedTotal = excludedEntries.reduce((s,e)=> s + (e.total||0), 0);
+    excludedStrip.style.display = 'block';
+    excludedStrip.textContent = `共同除外された支払い（参考・計算対象外）：${yen(excludedTotal)}／${excludedEntries.length}件`;
+  } else {
+    excludedStrip.style.display = 'none';
+  }
+}
+
+/* ---- edit modal ---- */
+const editModalOverlay = document.getElementById('editModalOverlay');
+function openEditModal(id){
+  const e = DATA.entries.find(x=>x.id===id);
+  if(!e) return;
+  document.getElementById('e_id').value = e.id;
+  document.getElementById('e_date').value = e.date;
+  document.getElementById('e_category').value = e.category;
+  document.getElementById('e_person').value = e.person;
+  document.getElementById('e_item').value = e.item;
+  document.getElementById('e_total').value = e.total;
+  const paidYuji = e.paidYuji != null ? e.paidYuji : e.total;
+  const paidMika = e.paidMika != null ? e.paidMika : 0;
+  document.getElementById('e_paid_yuji').value = paidYuji;
+  document.getElementById('e_paid_mika').value = paidMika;
+  document.getElementById('e_yuji').value = e.yuji;
+  document.getElementById('e_mika').value = e.mika;
+  document.getElementById('e_memo').value = e.memo || '';
+  document.getElementById('e_excluded').checked = !!e.excluded;
+  // 既存の支払い内容から「どちらが先払いしたか」を推定してトグルに反映
+  document.getElementById('e_paid_detail').style.display = 'none';
+  document.getElementById('e_paid_detail_toggle').textContent = '金額を個別に指定する（折半で立て替えた場合など）▾';
+  if(paidMika <= 0 && paidYuji > 0){
+    ePaidWho = 'yuji'; ePaidManual = false; updateEPaidToggleUI();
+  } else if(paidYuji <= 0 && paidMika > 0){
+    ePaidWho = 'mika'; ePaidManual = false; updateEPaidToggleUI();
+  } else {
+    // 折半など、単純な「全額どちらか」に当てはまらない場合は詳細欄を開いて表示
+    ePaidManual = true;
+    document.querySelectorAll('#e_paid_toggle button').forEach(b=>b.classList.remove('sel-yuji','sel-mika'));
+    document.getElementById('e_paid_detail').style.display = 'block';
+    document.getElementById('e_paid_detail_toggle').textContent = '金額を個別に指定する（折半で立て替えた場合など）▴';
+  }
+  syncEBarFromFields();
+  updateEDiffNote();
+  editModalOverlay.classList.add('open');
+}
+editModalOverlay.addEventListener('click', e=>{ if(e.target===editModalOverlay) editModalOverlay.classList.remove('open'); });
+
+document.getElementById('editForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const id = document.getElementById('e_id').value;
+  const entry = DATA.entries.find(x=>x.id===id);
+  if(!entry) return;
+  entry.date = document.getElementById('e_date').value;
+  entry.category = document.getElementById('e_category').value;
+  entry.person = document.getElementById('e_person').value;
+  entry.item = document.getElementById('e_item').value.trim();
+  entry.total = parseFloat(document.getElementById('e_total').value) || 0;
+  entry.paidYuji = parseFloat(document.getElementById('e_paid_yuji').value) || 0;
+  entry.paidMika = parseFloat(document.getElementById('e_paid_mika').value) || 0;
+  entry.yuji = parseFloat(document.getElementById('e_yuji').value) || 0;
+  entry.mika = parseFloat(document.getElementById('e_mika').value) || 0;
+  entry.excluded = document.getElementById('e_excluded').checked;
+  entry.recordedYuji = entry.yuji;
+  entry.recordedMika = entry.mika;
+  entry.confirmed = false;
+  entry.confirmedAt = null;
+  entry.confirmedBy = null;
+  entry.lastModifiedBy = currentUser;
+  entry.memo = document.getElementById('e_memo').value.trim();
+  rememberItem(entry.item);
+  save();
+  refreshDropdowns();
+  renderEntries();
+  renderBalance();
+  renderSummary();
+  editModalOverlay.classList.remove('open');
+  promptNotifyUsers(
+    '【揉めない家計簿】支払い記録が更新されました',
+    `支払い記録「${entry.item}」が更新されました。精算時の負担割合をご確認のうえ、確認ボタンで確定してください。`
+  );
+});
+
+document.getElementById('deleteEntryBtn').addEventListener('click', ()=>{
+  const id = document.getElementById('e_id').value;
+  if(!confirm('この記録を削除しますか？')) return;
+  DATA.entries = DATA.entries.filter(x=>x.id!==id);
+  save();
+  renderEntries();
+  renderBalance();
+  renderSummary();
+  editModalOverlay.classList.remove('open');
+});
+
+/* ===================== FIXED COSTS ===================== */
+document.querySelectorAll('[data-xsplit]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const t = parseFloat(document.getElementById('x_amount').value) || 0;
+    if(btn.dataset.xsplit==='yuji100'){ document.getElementById('x_yuji').value=t; document.getElementById('x_mika').value=0; }
+    if(btn.dataset.xsplit==='mika100'){ document.getElementById('x_yuji').value=0; document.getElementById('x_mika').value=t; }
+    if(btn.dataset.xsplit==='half'){ document.getElementById('x_yuji').value=Math.round(t/2); document.getElementById('x_mika').value=t-Math.round(t/2); }
+  });
+});
+autoSplit(document.getElementById('x_amount'), document.getElementById('x_yuji'), document.getElementById('x_mika'));
+
+const fixedModalOverlay = document.getElementById('fixedModalOverlay');
+document.getElementById('addFixedBtn').addEventListener('click', ()=>{
+  document.getElementById('fixedModalTitle').textContent = '定額費用を追加';
+  document.getElementById('fixedForm').reset();
+  document.getElementById('x_id').value = '';
+  document.getElementById('deleteFixedBtn').style.display = 'none';
+  fixedModalOverlay.classList.add('open');
+});
+fixedModalOverlay.addEventListener('click', e=>{ if(e.target===fixedModalOverlay) fixedModalOverlay.classList.remove('open'); });
+
+document.getElementById('fixedForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const id = document.getElementById('x_id').value;
+  const obj = {
+    id: id || uid(),
+    name: document.getElementById('x_name').value.trim(),
+    plan: document.getElementById('x_plan').value.trim(),
+    amount: parseFloat(document.getElementById('x_amount').value) || 0,
+    yuji: parseFloat(document.getElementById('x_yuji').value) || 0,
+    mika: parseFloat(document.getElementById('x_mika').value) || 0,
+    payday: parseInt(document.getElementById('x_payday').value) || null,
+  };
+  if(!obj.name){ alert('名称を入力してください'); return; }
+  if(id){
+    const idx = DATA.fixed.findIndex(x=>x.id===id);
+    DATA.fixed[idx] = obj;
+  } else {
+    DATA.fixed.push(obj);
+  }
+  save();
+  fixedModalOverlay.classList.remove('open');
+  renderFixed();
+});
+
+document.getElementById('deleteFixedBtn').addEventListener('click', ()=>{
+  const id = document.getElementById('x_id').value;
+  if(!id) return;
+  if(!confirm('この定額費用と関連する支払い履歴を削除しますか？')) return;
+  DATA.fixed = DATA.fixed.filter(x=>x.id!==id);
+  DATA.fixedPayments = DATA.fixedPayments.filter(p=>p.fixedId!==id);
+  save();
+  fixedModalOverlay.classList.remove('open');
+  renderFixed();
+  renderBalance();
+});
+
+function openFixedEdit(id){
+  const f = DATA.fixed.find(x=>x.id===id);
+  if(!f) return;
+  document.getElementById('fixedModalTitle').textContent = '定額費用を編集';
+  document.getElementById('x_id').value = f.id;
+  document.getElementById('x_name').value = f.name;
+  document.getElementById('x_plan').value = f.plan || '';
+  document.getElementById('x_amount').value = f.amount;
+  document.getElementById('x_yuji').value = f.yuji;
+  document.getElementById('x_mika').value = f.mika;
+  document.getElementById('x_payday').value = f.payday || '';
+  document.getElementById('deleteFixedBtn').style.display = 'block';
+  fixedModalOverlay.classList.add('open');
+}
+
+function currentYM(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+function shiftYM(ym, delta){
+  let [y,m] = ym.split('-').map(Number);
+  m += delta;
+  while(m>12){m-=12;y++;}
+  while(m<1){m+=12;y--;}
+  return y+'-'+String(m).padStart(2,'0');
+}
+function ymLabel(ym){
+  const [y,m] = ym.split('-');
+  return y+'年'+m+'月';
+}
+
+function getOrCreatePayment(fixedId, ym){
+  let p = DATA.fixedPayments.find(p=>p.fixedId===fixedId && p.yearMonth===ym);
+  if(!p){
+    const f = DATA.fixed.find(x=>x.id===fixedId);
+    p = { id: uid(), fixedId, yearMonth: ym, status:'due', paidDate:null, yuji: f?f.yuji:0, mika: f?f.mika:0 };
+    DATA.fixedPayments.push(p);
+  }
+  return p;
+}
+
+function buildYmOptions(centerYm){
+  const opts = [];
+  for(let i=-3;i<=2;i++) opts.push(shiftYM(centerYm,i));
+  return opts;
+}
+
+function renderFixed(){
+  const wrap = document.getElementById('fixedList');
+  if(DATA.fixed.length===0){
+    wrap.innerHTML = '<div class="empty-state">登録された定額費用がありません</div>';
+    return;
+  }
+  const nowYm = currentYM();
+  wrap.innerHTML = DATA.fixed.map(f=>{
+    const recent = DATA.fixedPayments
+      .filter(p=>p.fixedId===f.id)
+      .sort((a,b)=>b.yearMonth.localeCompare(a.yearMonth))
+      .slice(0,4);
+    const histHtml = recent.length
+      ? recent.map(p=>`<span>${ymLabel(p.yearMonth)}: ${p.status==='paid'?'✅両者済':p.confirmedBy&&p.confirmedBy.length>0?'⏳片方確認':'未確認'}</span>`).join('')
+      : '履歴なし';
+    return `<div class="fixed-item" data-id="${f.id}">
+      <div class="top">
+        <div>
+          <div class="name">${escapeHtml(f.name)}</div>
+          ${f.plan?`<div class="plan">${escapeHtml(f.plan)}</div>`:''}
+          <div class="split-line">勇治 ${yen(f.yuji)} ／ 美香 ${yen(f.mika)}${f.payday?'　毎月'+f.payday+'日':''}</div>
+        </div>
+        <div class="amount">${yen(f.amount)}</div>
+      </div>
+      <div class="month-row">
+        <select class="ym" data-id="${f.id}">
+          ${buildYmOptions(nowYm).map(ym=>`<option value="${ym}" ${ym===nowYm?'selected':''}>${ymLabel(ym)}</option>`).join('')}
+        </select>
+        <button type="button" class="status-pill due toggle-paid" data-id="${f.id}">状態を確認</button>
+        <button type="button" class="icon-btn edit-fixed" data-id="${f.id}">✏️</button>
+      </div>
+      <div class="month-history">${histHtml}</div>
+    </div>`;
+  }).join('');
+
+  wrap.querySelectorAll('.edit-fixed').forEach(btn=>{
+    btn.addEventListener('click', ()=> openFixedEdit(btn.dataset.id));
+  });
+
+  wrap.querySelectorAll('.fixed-item').forEach(item=>{
+    const id = item.dataset.id;
+    const ymSelect = item.querySelector('.ym');
+    const pill = item.querySelector('.toggle-paid');
+    function refreshPill(){
+      const ym = ymSelect.value;
+      const p = DATA.fixedPayments.find(p=>p.fixedId===id && p.yearMonth===ym);
+      if(p && p.status==='paid'){
+        pill.textContent = ymLabel(ym)+'：両者確認済み ✅';
+        pill.classList.add('pill-paid-both');
+      } else if(p && p.confirmedBy && p.confirmedBy.length>0){
+        const users2 = DATA.users||[];
+        const cnames = p.confirmedBy.map(function(uid){ var u=users2.find(function(x){return x.id===uid;}); return u?(u.name||u.id):'不明'; });
+        const wnames = users2.filter(function(u){return p.confirmedBy.indexOf(u.id)<0;}).map(function(u){return u.name||u.id;});
+        pill.textContent = ymLabel(ym)+'：'+cnames.join('・')+'確認済み（'+wnames.join('・')+'待ち）';
+        pill.classList.add('pill-pending');
+      } else {
+        pill.textContent = ymLabel(ym)+'：未確認（タップで確認）';
+        pill.classList.add('pill-due');
+      }
+    }
+    refreshPill();
+    ymSelect.addEventListener('change', refreshPill);
+    pill.addEventListener('click', ()=>{
+      const ym = ymSelect.value;
+      const p = getOrCreatePayment(id, ym);
+      if(!p.confirmedBy) p.confirmedBy=[];
+      if(p.status==='paid'){
+        if(!confirm('支払済みを取り消しますか？')) return;
+        p.status='due'; p.paidDate=null; p.confirmedBy=[];
+      } else {
+        if(p.confirmedBy.indexOf(currentUser)<0) p.confirmedBy.push(currentUser);
+        const users2 = DATA.users||[];
+        const allOk = users2.length>=2
+          ? users2.every(function(u){return p.confirmedBy.indexOf(u.id)>=0;})
+          : p.confirmedBy.length>=2;
+        if(allOk){
+          p.status='paid'; p.paidDate=todayStr();
+          alert('両者確認完了！支払済みになりました ✅');
+        } else {
+          p.status='pending';
+          const wnames = users2.filter(function(u){return p.confirmedBy.indexOf(u.id)<0;}).map(function(u){return u.name||u.id;});
+          alert('確認しました。'+wnames.join('・')+'の確認をお待ちください。');
+        }
+      }
+      save(); renderFixed(); renderBalance();
+    });
+  });
+}
+
+/* ===================== SETTLEMENTS ===================== */
+document.getElementById('s_date').value = todayStr();
+document.getElementById('settleForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const s = {
+    id: uid(),
+    date: document.getElementById('s_date').value,
+    direction: document.getElementById('s_direction').value,
+    amount: parseFloat(document.getElementById('s_amount').value) || 0,
+    memo: document.getElementById('s_memo').value.trim(),
+  };
+  DATA.settlements.push(s);
+  save();
+  document.getElementById('settleForm').reset();
+  document.getElementById('s_date').value = todayStr();
+  renderSettle();
+  renderBalance();
+});
+
+function renderSettle(){
+  renderSettlePeriod();
+  const list = document.getElementById('settleList');
+  const items = DATA.settlements.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  if(items.length===0){
+    list.innerHTML = '<div class="empty-state">精算履歴がまだありません</div>';
+    return;
+  }
+  list.innerHTML = items.map(s=>{
+    const arrow = s.direction==='mika_to_yuji' ? '美香 → 勇治' : '勇治 → 美香';
+    return `<div class="entry" data-id="${s.id}">
+      <div class="date">${s.date?s.date.slice(5).replace('-','/'):''}</div>
+      <div class="body">
+        <div class="item-name">${arrow}</div>
+        ${s.memo?`<div class="tags"><span class="tag">${escapeHtml(s.memo)}</span></div>`:''}
+      </div>
+      <div class="nums">
+        <div class="total">${yen(s.amount)}</div>
+        <div class="split"><button class="delete-link del-settle" data-id="${s.id}">削除</button></div>
+      </div>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.del-settle').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      e.stopPropagation();
+      if(!confirm('この精算記録を削除しますか？')) return;
+      DATA.settlements = DATA.settlements.filter(x=>x.id!==btn.dataset.id);
+      save();
+      renderSettle();
+      renderBalance();
+    });
+  });
+}
+
+/* ===================== 期間で精算する（先払い額 vs 負担額） ===================== */
+let currentSettlePreview = null;
+
+function getPendingSettleRequest(){
+  return DATA.settlementRequests.find(r=>r.status==='pending') || null;
+}
+
+document.getElementById('calcSettlePeriodBtn').addEventListener('click', ()=>{
+  if(_spm==='t'&&_sTiles.length>0){var _st=_sTiles.slice().sort();document.getElementById('settlePeriodStart').value=_st[0];document.getElementById('settlePeriodEnd').value=_st[_st.length-1];}
+  const _ss=document.getElementById('settlePeriodStart');
+  const _se=document.getElementById('settlePeriodEnd');
+  const start=_ss?_ss.value+(_ss.type==='month'?'-01':''):'';
+  const end=_se?_se.value+(_se.type==='month'?'-28':''):'';
+  if(!start || !end){ alert('開始日と終了日を入力してください'); return; }
+  if(start > end){ alert('開始日は終了日より前にしてください'); return; }
+
+  const targets = DATA.entries.filter(e=>{
+    if(e.excluded || e.settled) return false;
+    if(!e.date) return false;
+    return e.date >= start && e.date <= end;
+  });
+
+  const sums = targets.reduce((acc,e)=>{
+    acc.total += e.total||0;
+    acc.paidYuji += (e.paidYuji!=null ? e.paidYuji : (e.total||0));
+    acc.paidMika += (e.paidMika!=null ? e.paidMika : 0);
+    acc.burdenYuji += e.yuji||0;
+    acc.burdenMika += e.mika||0;
+    return acc;
+  }, {total:0, paidYuji:0, paidMika:0, burdenYuji:0, burdenMika:0});
+  const diff = sums.burdenMika - sums.paidMika;
+
+  currentSettlePreview = {
+    startDate: start, endDate: end,
+    entryIds: targets.map(e=>e.id),
+    paidYuji: sums.paidYuji, paidMika: sums.paidMika,
+    burdenYuji: sums.burdenYuji, burdenMika: sums.burdenMika,
+    diff,
+  };
+
+  document.getElementById('sp_total').textContent = yen(sums.total);
+  document.getElementById('sp_count').textContent = `対象${targets.length}件`;
+  document.getElementById('sp_paidYuji').textContent = yen(sums.paidYuji);
+  document.getElementById('sp_paidMika').textContent = yen(sums.paidMika);
+  document.getElementById('sp_burdenYuji').textContent = yen(sums.burdenYuji);
+  document.getElementById('sp_burdenMika').textContent = yen(sums.burdenMika);
+  const yPct = sums.total>0 ? Math.round((sums.burdenYuji/sums.total)*100) : 0;
+  document.getElementById('sp_burdenYujiPct').textContent = `負担：勇治 ${yPct}%`;
+  document.getElementById('sp_burdenMikaPct').textContent = `負担：美香 ${100-yPct}%`;
+
+  const diffNote = document.getElementById('sp_diff_note');
+  diffNote.classList.remove('to-yuji','to-mika');
+  if(Math.abs(diff) < 1){
+    diffNote.textContent = '差額なし（先払い額と負担額が一致しています。精算は不要です）';
+  } else if(diff > 0){
+    diffNote.textContent = `精算額：美香 → 勇治　${yen(diff)}`;
+    diffNote.classList.add('to-yuji');
+  } else {
+    diffNote.textContent = `精算額：勇治 → 美香　${yen(Math.abs(diff))}`;
+    diffNote.classList.add('to-mika');
+  }
+
+  const reqBtn = document.getElementById('requestSettlePeriodBtn');
+  const pending = getPendingSettleRequest();
+  if(pending){
+    reqBtn.disabled = true;
+    reqBtn.textContent = '他の精算申請が進行中のため、先に確認・取り消しをしてください';
+  } else if(targets.length === 0){
+    reqBtn.disabled = true;
+    reqBtn.textContent = '対象の支払いがありません';
+  } else {
+    reqBtn.disabled = false;
+    reqBtn.textContent = 'この内容で精算完了を申請する';
+  }
+
+  document.getElementById('settlePeriodPreview').style.display = 'block';
+});
+
+document.getElementById('requestSettlePeriodBtn').addEventListener('click', ()=>{
+  if(!currentSettlePreview || !currentUser) return;
+  if(getPendingSettleRequest()){ alert('他の精算申請が進行中です。先に確認または取り消しをしてください。'); return; }
+  if(currentSettlePreview.entryIds.length === 0){ alert('対象の支払いがありません'); return; }
+  const req = Object.assign({
+    id: uid(),
+    requestedBy: currentUser,
+    confirmedBy: null,
+    status: 'pending',
+    createdAt: Date.now(),
+    completedAt: null,
+  }, currentSettlePreview);
+  DATA.settlementRequests.push(req);
+  save();
+  document.getElementById('settlePeriodPreview').style.display = 'none';
+  currentSettlePreview = null;
+  renderSettle();
+});
+
+document.getElementById('confirmSettlePeriodBtn').addEventListener('click', ()=>{
+  const pending = getPendingSettleRequest();
+  if(!pending || !currentUser) return;
+  if(currentUser === pending.requestedBy) return; // 申請者本人は確認できない
+  pending.status = 'completed';
+  pending.confirmedBy = currentUser;
+  pending.completedAt = Date.now();
+  pending.entryIds.forEach(id=>{
+    const e = DATA.entries.find(x=>x.id===id);
+    if(e){ e.settled = true; e.settledAt = Date.now(); e.settledRequestId = pending.id; }
+  });
+  save();
+  renderEntries();
+  renderBalance();
+  renderSummary();
+  renderSettle();
+});
+
+document.getElementById('cancelSettlePeriodBtn').addEventListener('click', ()=>{
+  const pending = getPendingSettleRequest();
+  if(!pending || pending.requestedBy !== currentUser) return;
+  if(!confirm('この精算申請を取り消しますか？')) return;
+  DATA.settlementRequests = DATA.settlementRequests.filter(r=>r.id!==pending.id);
+  save();
+  renderSettle();
+});
+
+function renderSettlePeriod(){
+  const pending = getPendingSettleRequest();
+  const pendingCard = document.getElementById('pendingSettleCard');
+  if(pending){
+    pendingCard.style.display = 'block';
+    const diffText = Math.abs(pending.diff) < 1
+      ? '差額なし'
+      : (pending.diff > 0 ? `美香 → 勇治　${yen(pending.diff)}` : `勇治 → 美香　${yen(Math.abs(pending.diff))}`);
+    document.getElementById('pendingSettleInfo').innerHTML = `
+      <p class="small-note">期間：${pending.startDate} 〜 ${pending.endDate}（対象 ${pending.entryIds.length}件）</p>
+      <p class="small-note">申請者：${roleLabel(pending.requestedBy)}</p>
+      <div class="diff-note">${diffText}</div>
+    `;
+    const confirmBtn = document.getElementById('confirmSettlePeriodBtn');
+    const cancelBtn = document.getElementById('cancelSettlePeriodBtn');
+    if(currentUser === pending.requestedBy){
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = `${roleLabel(otherRole(pending.requestedBy))}の確認待ちです`;
+      cancelBtn.style.display = 'block';
+    } else {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = '確認して精算完了にする';
+      cancelBtn.style.display = 'none';
+    }
+  } else {
+    pendingCard.style.display = 'none';
+  }
+
+  const histWrap = document.getElementById('settlePeriodHistory');
+  const completed = DATA.settlementRequests
+    .filter(r=>r.status==='completed')
+    .sort((a,b)=>(b.completedAt||0)-(a.completedAt||0));
+  if(completed.length === 0){
+    histWrap.innerHTML = '<div class="empty-state">まだ精算完了の記録がありません</div>';
+  } else {
+    histWrap.innerHTML = completed.map(r=>{
+      const diffText = Math.abs(r.diff) < 1
+        ? '差額なし'
+        : (r.diff > 0 ? `美香 → 勇治 ${yen(r.diff)}` : `勇治 → 美香 ${yen(Math.abs(r.diff))}`);
+      return `<div class="entry">
+        <div class="date">${r.startDate.slice(5)}〜${r.endDate.slice(5)}</div>
+        <div class="body">
+          <div class="item-name">${diffText}</div>
+          <div class="tags"><span class="tag">${r.entryIds.length}件</span><span class="tag">申請:${roleLabel(r.requestedBy)}／確認:${roleLabel(r.confirmedBy)}</span></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+/* ===================== マイアカウント（自分の名前・メール・暗証番号） ===================== */
+function renderMyAccount(){
+  const u = getCurrentUserRecord();
+  if(!u) return;
+  document.getElementById('my_name').value = u.name || '';
+  document.getElementById('my_email').value = u.email || '';
+  document.getElementById('my_currentPin').value = '';
+  document.getElementById('my_newPin').value = '';
+  document.getElementById('my_pinError').textContent = '';
+}
+document.getElementById('saveMyProfileBtn').addEventListener('click', ()=>{
+  const u = getCurrentUserRecord();
+  if(!u) return;
+  const name = document.getElementById('my_name').value.trim();
+  const email = document.getElementById('my_email').value.trim();
+  if(!name){ alert('名前を入力してください'); return; }
+  u.name = name;
+  u.email = email;
+  save();
+  refreshHeaderUser();
+  renderUserManageList();
+  alert('保存しました。');
+});
+document.getElementById('changeMyPinBtn').addEventListener('click', ()=>{
+  const u = getCurrentUserRecord();
+  if(!u) return;
+  const errEl = document.getElementById('my_pinError');
+  const cur = document.getElementById('my_currentPin').value.trim();
+  const next = document.getElementById('my_newPin').value.trim();
+  if(u.pinHash && simpleHash(cur) !== u.pinHash){
+    errEl.textContent = '現在の暗証番号が正しくありません。';
+    return;
+  }
+  if(next.length < 4){
+    errEl.textContent = '新しい暗証番号は4桁以上で入力してください。';
+    return;
+  }
+  u.pinHash = simpleHash(next);
+  save();
+  errEl.textContent = '';
+  document.getElementById('my_currentPin').value = '';
+  document.getElementById('my_newPin').value = '';
+  alert('暗証番号を変更しました。');
+});
+
+/* ===================== 当事者の名前 ===================== */
+function renderPartyNamesSettings(){
+  if(!DATA.partyNames) DATA.partyNames = { yuji:'勇治', mika:'美香' };
+  document.getElementById('partyNameYuji').value = DATA.partyNames.yuji;
+  document.getElementById('partyNameMika').value = DATA.partyNames.mika;
+}
+document.getElementById('savePartyNamesBtn').addEventListener('click', ()=>{
+  const y = document.getElementById('partyNameYuji').value.trim();
+  const m = document.getElementById('partyNameMika').value.trim();
+  if(!y || !m){ alert('両方の名前を入力してください'); return; }
+  DATA.partyNames.yuji = y;
+  DATA.partyNames.mika = m;
+  save();
+  refreshAll();
+  alert('保存しました。');
+});
+
+/* ===================== ユーザー管理（管理者のみ） ===================== */
+function renderUserManageList(){
+  const wrap = document.getElementById('userManageList');
+  if(!wrap) return;
+  wrap.innerHTML = DATA.users.map(u=>{
+    const partyTxt = u.party ? roleLabel(u.party) : 'なし';
+    return `<div class="ratio-row" data-user-id="${u.id}">
+      <div class="rname">${escapeHtml(u.name)}${u.role==='admin'?'（管理者）':''}<br><span style="font-size:11px;color:var(--sub);">${escapeHtml(u.email||'(メール未登録)')}・当事者:${partyTxt}</span></div>
+      <div class="rinputs"><button type="button" class="btn-secondary edit-user-btn" data-id="${u.id}">編集</button></div>
+    </div>`;
+  }).join('');
+  wrap.querySelectorAll('.edit-user-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=> openUserModal(btn.dataset.id));
+  });
+}
+
+const userModalOverlay = document.getElementById('userModalOverlay');
+function openUserModal(userId){
+  document.getElementById('um_id').value = userId || '';
+  if(userId){
+    const u = getUserById(userId);
+    if(!u) return;
+    document.getElementById('userModalTitle').textContent = 'ユーザーを編集';
+    document.getElementById('um_name').value = u.name;
+    document.getElementById('um_email').value = u.email || '';
+    document.getElementById('um_role').value = u.role;
+    document.getElementById('um_party').value = u.party || '';
+    document.getElementById('deleteUserBtn').style.display = 'block';
+    document.getElementById('resetUserPinBtn').style.display = 'block';
+  } else {
+    document.getElementById('userModalTitle').textContent = 'ユーザーを追加';
+    document.getElementById('um_name').value = '';
+    document.getElementById('um_email').value = '';
+    document.getElementById('um_role').value = 'member';
+    document.getElementById('um_party').value = '';
+    document.getElementById('deleteUserBtn').style.display = 'none';
+    document.getElementById('resetUserPinBtn').style.display = 'none';
+  }
+  userModalOverlay.classList.add('open');
+}
+document.getElementById('addUserBtn').addEventListener('click', ()=> openUserModal(null));
+document.getElementById('closeUserModalBtn').addEventListener('click', ()=> userModalOverlay.classList.remove('open'));
+userModalOverlay.addEventListener('click', e=>{ if(e.target===userModalOverlay) userModalOverlay.classList.remove('open'); });
+
+document.getElementById('saveUserBtn').addEventListener('click', ()=>{
+  const id = document.getElementById('um_id').value;
+  const name = document.getElementById('um_name').value.trim();
+  const email = document.getElementById('um_email').value.trim();
+  const role = document.getElementById('um_role').value;
+  const party = document.getElementById('um_party').value || null;
+  if(!name){ alert('名前を入力してください'); return; }
+  if(id){
+    const u = getUserById(id);
+    if(!u) return;
+    u.name = name; u.email = email; u.role = role; u.party = party;
+  } else {
+    DATA.users.push({ id: uid(), name, email, role, party, pinHash: null, createdAt: Date.now() });
+  }
+  save();
+  userModalOverlay.classList.remove('open');
+  renderUserManageList();
+  refreshHeaderUser();
+});
+document.getElementById('resetUserPinBtn').addEventListener('click', ()=>{
+  const id = document.getElementById('um_id').value;
+  const u = getUserById(id);
+  if(!u) return;
+  if(!confirm(`${u.name}の暗証番号を初期化しますか？次回ログイン時に本人が新しい暗証番号を設定します。`)) return;
+  u.pinHash = null;
+  save();
+  alert('初期化しました。');
+});
+document.getElementById('deleteUserBtn').addEventListener('click', ()=>{
+  const id = document.getElementById('um_id').value;
+  const u = getUserById(id);
+  if(!u) return;
+  if(id === currentUserId){ alert('自分自身は削除できません。'); return; }
+  if(!confirm(`${u.name}を削除しますか？`)) return;
+  DATA.users = DATA.users.filter(x=>x.id!==id);
+  save();
+  userModalOverlay.classList.remove('open');
+  renderUserManageList();
+});
+
+/* ===================== データの初期化（管理者・メール認証必須） ===================== */
+const adminResetModalOverlay = document.getElementById('adminResetModalOverlay');
+document.getElementById('resetDataBtn').addEventListener('click', ()=>{
+  if(!isAdmin()) return;
+  document.getElementById('adminResetStep1').style.display = 'block';
+  document.getElementById('adminResetStep2').style.display = 'none';
+  document.getElementById('ar_error').textContent = '';
+  adminResetModalOverlay.classList.add('open');
+});
+document.getElementById('ar_cancelBtn').addEventListener('click', ()=> adminResetModalOverlay.classList.remove('open'));
+adminResetModalOverlay.addEventListener('click', e=>{ if(e.target===adminResetModalOverlay) adminResetModalOverlay.classList.remove('open'); });
+
+document.getElementById('ar_sendCodeBtn').addEventListener('click', async ()=>{
+  const u = getCurrentUserRecord();
+  if(!u || !u.email){
+    alert('管理者自身のメールアドレスが「マイアカウント」に登録されていません。先に登録してください。');
+    return;
+  }
+  const code = String(Math.floor(100000 + Math.random()*900000));
+  DATA.adminVerifications = (DATA.adminVerifications||[]).filter(v=>v.userId!==u.id);
+  DATA.adminVerifications.push({ id: uid(), userId: u.id, code, expiresAt: Date.now() + 10*60*1000, purpose:'data_reset' });
+  save();
+  const sent = await sendEmailNotification(
+    u.email, u.name,
+    '【揉めない家計簿】データ初期化の確認コード',
+    `${u.name}様\n\nデータ初期化の確認コードは次の通りです。\n\n確認コード：${code}\n\n10分以内に入力してください。心当たりがない場合は無視してください。`
+  );
+  document.getElementById('ar_sentNote').textContent = sent
+    ? `${u.email} に確認コードを送信しました。`
+    : 'メール送信に失敗しました（EmailJSが未設定の可能性があります）。';
+  document.getElementById('adminResetStep1').style.display = 'none';
+  document.getElementById('adminResetStep2').style.display = 'block';
+});
+
+document.getElementById('ar_confirmBtn').addEventListener('click', ()=>{
+  const u = getCurrentUserRecord();
+  if(!u) return;
+  const code = document.getElementById('ar_code').value.trim();
+  const errEl = document.getElementById('ar_error');
+  const pending = (DATA.adminVerifications||[]).find(v=>v.userId===u.id && v.purpose==='data_reset');
+  if(!pending || pending.expiresAt < Date.now() || pending.code !== code){
+    errEl.textContent = '確認コードが正しくないか、有効期限が切れています。';
+    return;
+  }
+  if(!confirm('本当にすべての支払い記録・定額費用・精算履歴を削除しますか？この操作は元に戻せません。')) return;
+  DATA.entries = [];
+  DATA.fixed = [];
+  DATA.fixedPayments = [];
+  DATA.settlements = [];
+  DATA.settlementRequests = [];
+  DATA.adminVerifications = DATA.adminVerifications.filter(v=>v.userId!==u.id);
+  save();
+  adminResetModalOverlay.classList.remove('open');
+  refreshAll();
+  alert('データを初期化しました。');
+});
+
+/* ===================== SETTINGS ===================== */
+function renderSettingsChips(){
+  const catWrap = document.getElementById('categoryChips');
+  catWrap.innerHTML = DATA.categories.map(c=>`<span class="chip">${escapeHtml(c)} <button data-del-cat="${escapeHtml(c)}" style="border:none;background:none;color:var(--danger);">×</button></span>`).join('');
+  catWrap.querySelectorAll('[data-del-cat]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      DATA.categories = DATA.categories.filter(c=>c!==btn.dataset.delCat);
+      save(); refreshDropdowns(); renderSettingsChips(); renderCategoryRatios();
+    });
+  });
+  const perWrap = document.getElementById('personChips');
+  perWrap.innerHTML = DATA.persons.map(p=>`<span class="chip">${escapeHtml(p)} <button data-del-per="${escapeHtml(p)}" style="border:none;background:none;color:var(--danger);">×</button></span>`).join('');
+  perWrap.querySelectorAll('[data-del-per]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      DATA.persons = DATA.persons.filter(p=>p!==btn.dataset.delPer);
+      save(); refreshDropdowns(); renderSettingsChips();
+    });
+  });
+}
+
+function renderCategoryRatios(){
+  if(!DATA.categoryRatios) DATA.categoryRatios = {};
+  const wrap = document.getElementById('categoryRatios');
+  if(DATA.categories.length===0){
+    wrap.innerHTML = '<div class="empty-state">カテゴリがありません</div>';
+    return;
+  }
+  wrap.innerHTML = DATA.categories.map(c=>{
+    const pct = getCategoryRatio(c);
+    return `<div class="ratio-row" data-cat="${escapeHtml(c)}">
+      <div class="rname">${escapeHtml(c)}</div>
+      <div class="rinputs">
+        勇治<input type="number" class="ratio-pct" min="0" max="100" value="${pct}" data-cat-ratio="${escapeHtml(c)}">%
+        ／ 美香<span class="mika-pct">${100-pct}</span>%
+      </div>
+    </div>`;
+  }).join('');
+  wrap.querySelectorAll('[data-cat-ratio]').forEach(input=>{
+    input.addEventListener('change', ()=>{
+      let v = parseInt(input.value);
+      if(isNaN(v)) v = 50;
+      v = Math.max(0, Math.min(100, v));
+      input.value = v;
+      DATA.categoryRatios[input.dataset.catRatio] = v;
+      input.closest('.ratio-row').querySelector('.mika-pct').textContent = 100-v;
+      save();
+    });
+  });
+}
+
+document.getElementById('addCategoryBtn').addEventListener('click', ()=>{
+  const input = document.getElementById('newCategory');
+  const v = input.value.trim();
+  if(!v) return;
+  if(!DATA.categories.includes(v)) DATA.categories.push(v);
+  if(!DATA.categoryRatios) DATA.categoryRatios = {};
+  if(!(v in DATA.categoryRatios)) DATA.categoryRatios[v] = 50;
+  input.value='';
+  save(); refreshDropdowns(); renderSettingsChips(); renderCategoryRatios();
+});
+document.getElementById('addPersonBtn').addEventListener('click', ()=>{
+  const input = document.getElementById('newPerson');
+  const v = input.value.trim();
+  if(!v) return;
+  if(!DATA.persons.includes(v)) DATA.persons.push(v);
+  input.value='';
+  save(); refreshDropdowns(); renderSettingsChips();
+});
+
+/* ===================== EXCEL IMPORT ===================== */
+document.getElementById('excelImportBtn').addEventListener('click', ()=>{
+  document.getElementById('excelFile').click();
+});
+
+function excelDateToStr(v){
+  if(v instanceof Date && !isNaN(v)){
+    return v.getFullYear()+'-'+String(v.getMonth()+1).padStart(2,'0')+'-'+String(v.getDate()).padStart(2,'0');
+  }
+  if(typeof v === 'string' && v.trim()){
+    // try to parse common formats
+    const d = new Date(v);
+    if(!isNaN(d)) return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  return null;
+}
+function numOr0(v){
+  const n = parseFloat(v);
+  return isNaN(n) ? 0 : n;
+}
+
+document.getElementById('excelFile').addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const statusEl = document.getElementById('excelImportStatus');
+  statusEl.textContent = '読み込み中…';
+  const reader = new FileReader();
+  reader.onload = evt=>{
+    try{
+      const wb = XLSX.read(evt.target.result, {type:'array', cellDates:true});
+      const newEntries = [];
+      const newFixed = [];
+
+      wb.SheetNames.forEach(sheetName=>{
+        const ws = wb.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:false, dateNF:'yyyy-mm-dd'});
+        if(!rows || rows.length < 2) return;
+
+        // re-read this sheet with cellDates for accurate date objects
+        const rowsDates = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+
+        const header = rowsDates[0] || [];
+        const headerStr = header.map(h=> (h||'').toString());
+
+        const looksLikePayments = headerStr.some(h=>h.includes('支払日')) && headerStr.some(h=>h.includes('支払総額'));
+        const looksLikeMonthly = headerStr.some(h=>h.includes('契約日')) || headerStr.some(h=>h.includes('合計'));
+
+        if(looksLikePayments){
+          // known template: A=date, B=category, C=person, D=item, E=total, F=yuji, G=mika
+          for(let i=1;i<rowsDates.length;i++){
+            const r = rowsDates[i];
+            if(!r) continue;
+            const dateStr = excelDateToStr(r[0]);
+            const item = r[3];
+            if(!dateStr || !item) continue; // skip totals / blank rows
+            newEntries.push({
+              id: uid(),
+              date: dateStr,
+              category: (r[1]||'').toString().trim() || 'その他',
+              person: (r[2]||'').toString().trim() || '共通',
+              item: item.toString().trim(),
+              total: numOr0(r[4]),
+              paidYuji: numOr0(r[4]),
+              paidMika: 0,
+              yuji: numOr0(r[5]),
+              mika: numOr0(r[6]),
+              recordedYuji: numOr0(r[5]),
+              recordedMika: numOr0(r[6]),
+              excluded: false,
+              confirmed: false,
+              confirmedAt: null,
+              confirmedBy: null,
+              createdBy: null,
+              lastModifiedBy: null,
+              createdAt: Date.now(),
+              memo: '(エクセルから取込)',
+            });
+          }
+        } else if(looksLikeMonthly){
+          // known template: A=契約日, B=名称, C=プラン, ... H=合計
+          for(let i=1;i<rowsDates.length;i++){
+            const r = rowsDates[i];
+            if(!r) continue;
+            const name = r[1];
+            const amount = numOr0(r[7]);
+            if(!name || !amount) continue;
+            newFixed.push({
+              id: uid(),
+              name: name.toString().trim(),
+              plan: (r[2]||'').toString().trim(),
+              amount: amount,
+              yuji: 0,
+              mika: 0,
+              payday: null,
+            });
+          }
+        }
+      });
+
+      if(newEntries.length===0 && newFixed.length===0){
+        statusEl.textContent = '取込できる内容が見つかりませんでした。シート構成をご確認ください。';
+        return;
+      }
+
+      let msg = '取り込み内容：\n';
+      if(newEntries.length) msg += `支払い記録 ${newEntries.length}件\n`;
+      if(newFixed.length) msg += `毎月の定額費用 ${newFixed.length}件（分担額は0で登録されるため、後で編集してください）\n`;
+      msg += '\n現在のデータに追加します。よろしいですか？';
+
+      if(!confirm(msg)){
+        statusEl.textContent = '取込をキャンセルしました。';
+        e.target.value = '';
+        return;
+      }
+
+      newEntries.forEach(en=>{ DATA.entries.push(en); rememberItem(en.item); });
+      newFixed.forEach(f=> DATA.fixed.push(f));
+      save();
+      refreshAll();
+      statusEl.textContent = `取込が完了しました（支払い記録 ${newEntries.length}件 / 定額費用 ${newFixed.length}件）。`;
+    }catch(err){
+      console.error(err);
+      statusEl.textContent = '読み込みに失敗しました。ファイル形式をご確認ください。';
+    }
+    e.target.value = '';
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+/* ===================== IMPORT / EXPORT ===================== */
+document.getElementById('manualSyncBtn').addEventListener('click', async ()=>{
+  setSyncStatus('同期確認中…', '');
+  const before = JSON.stringify(DATA);
+  const ok = await manualSync();
+  if(!ok){
+    alert('クラウドに接続できませんでした。FIREBASE_CONFIGとDB_PATHの設定をご確認ください。');
+    return;
+  }
+  if(JSON.stringify(DATA) !== before) refreshAll();
+  setSyncStatus('同期済み', 'ok');
+});
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const blob = new Blob([JSON.stringify(DATA, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '共同支払いデータ_' + todayStr() + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+document.getElementById('importBtn').addEventListener('click', ()=>{
+  document.getElementById('importFile').click();
+});
+document.getElementById('importFile').addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = evt=>{
+    try{
+      const parsed = JSON.parse(evt.target.result);
+      if(!confirm('現在のデータを上書きして読み込みますか？')) return;
+      DATA = Object.assign(defaultData(), parsed);
+      save();
+      refreshAll();
+    }catch(err){
+      alert('読み込みに失敗しました。ファイルの形式を確認してください。');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+/* ===================== INIT ===================== */
+function refreshAll(){
+  ensureDefaultUsers();
+  refreshDropdowns();
+  renderSettingsChips();
+  renderCategoryRatios();
+  renderPartyNamesSettings();
+  renderUserManageList();
+  renderMyAccount();
+  renderEntries();
+  renderFixed();
+  renderSettle();
+  renderBalance();
+  renderSummary();
+  refreshHeaderUser();
+}
+
+document.getElementById('f_date').value = todayStr();
+(function initSettlePeriodDefaults(){
+  const today = new Date();
+  const firstOfMonth = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-01';
+  var _sp1=document.getElementById('settlePeriodStart');if(_sp1)_sp1.value=firstOfMonth.substring(0,7);
+  var _sp2=document.getElementById('settlePeriodEnd');if(_sp2)_sp2.value=todayStr().substring(0,7);
+})();
+
+function initApp(){
+  const createdDefaults = ensureDefaultUsers();
+  syncCurrentParty();
+  refreshAll();
+  initFirebaseSync();
+  initEmailJS();
+  if(createdDefaults) save();
+  if(currentUserId && getCurrentUserRecord()){
+    hideLogin();
+    refreshHeaderUser();
+  } else {
+    currentUserId = null;
+    showLogin();
+  }
+}
+
+boot();
+</script>
+</body>
+</html>
