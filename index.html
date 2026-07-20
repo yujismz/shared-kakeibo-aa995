@@ -1523,6 +1523,10 @@ let serverAvailable = false;
 let pushTimer = null;
 let firebaseRef = null;
 let applyingRemoteUpdate = false;
+// クラウドの中身を一度でも受け取れたか。
+// 受け取る前に送信すると、手元の空データでクラウド全体を置き換えてしまうため、
+// このフラグが立つまで pushServerData() は何も送らない。
+let cloudSnapshotReceived = false;
 
 function setSyncStatus(text, state){
   const el = document.getElementById('syncStatus');
@@ -1538,9 +1542,11 @@ function initFirebaseSync(){
       return false;
     }
     firebaseRef = firebase.database().ref(DB_PATH);
+    cloudSnapshotReceived = false; // 世帯を切り替えた場合もここからやり直す
     let syncPrimed = false; // 最初のスナップショットは「変化」ではないので、リセット判定の対象外にする
     firebaseRef.on('value', snapshot=>{
       const val = snapshot.val();
+      cloudSnapshotReceived = true; // クラウドの状態を確認できたので、以降は送信してよい
       serverAvailable = true;
       const now = new Date();
       const stamp = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
@@ -1594,6 +1600,13 @@ function initFirebaseSync(){
 async function pushServerData(){
   if(!firebaseRef){
     setSyncStatus('未設定（この端末のみ保存）', 'warn');
+    return;
+  }
+  // クラウドの中身をまだ一度も受け取っていない間は、絶対に送らない。
+  // firebaseRef.set() はノードを丸ごと置き換えるため、手元が空の状態で送ると
+  // クラウド側の全データが消える。読み込みが終われば自動で送信できるようになる。
+  if(!cloudSnapshotReceived){
+    setSyncStatus('クラウド読み込み中…', 'warn');
     return;
   }
   try{
