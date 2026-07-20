@@ -1528,6 +1528,84 @@ let applyingRemoteUpdate = false;
 // このフラグが立つまで pushServerData() は何も送らない。
 let cloudSnapshotReceived = false;
 
+/* ---- 対策②：手元の欠損でクラウドのレコードを消させない ----
+  対策①（上のフラグ）は「読み込み前に送る」経路を塞いだだけで、
+  送信そのものは今も set() 相当でノードを置き換える。そのため、
+  何かの拍子に手元のレコードが欠けた状態で送信されれば、やはり消える。
+
+  ここでは「送信内容から消えたレコード」を2種類に区別する。
+    ・利用者が削除ボタンを押した → 意図的な削除。そのまま消してよい
+    ・そうでない → 事故。クラウドに残っているレコードを手元に戻してから送る
+  結果として、手元が欠けている端末は「足す」ことしかできなくなる。 */
+
+// 保護対象のコレクションと、レコードの識別子フィールド。
+// null は「値そのものが識別子」（文字列の配列）を意味する。
+const PROTECTED_COLLECTIONS = {
+  entries: 'id', fixed: 'id', fixedPayments: 'id',
+  settlements: 'id', settlementRequests: 'id', users: 'id',
+  items: null, categories: null, persons: null,
+};
+// pendingResets / adminVerifications は期限切れで自動的に消えるべき一時データなので保護しない。
+
+let cloudMirror = null;              // 最後にクラウドと一致していたと分かっている状態
+let intentionalDeletes = new Set();  // 'コレクション名:識別子'。利用者が明示的に消したもの
+let destructivePushAllowed = false;  // 完全リセットなど、全消しを意図したときだけ true
+
+function cloneData(o){ return JSON.parse(JSON.stringify(o)); }
+
+// 削除ボタンの処理から呼ぶ。ここを通したものだけがクラウドからも消える。
+function markDeleted(collection, ...ids){
+  ids.forEach(id=>{ if(id!==undefined && id!==null) intentionalDeletes.add(collection+':'+id); });
+}
+
+// クラウドにあって手元に無いレコードのうち、意図的な削除でないものを手元へ戻す。
+// 戻した件数が1件でもあれば true（＝画面の描き直しが必要）。
+function healFromCloudMirror(){
+  if(!cloudMirror) return false;
+  let healed = false;
+  Object.keys(PROTECTED_COLLECTIONS).forEach(coll=>{
+    const idField = PROTECTED_COLLECTIONS[coll];
+    const mine = DATA[coll], cloud = cloudMirror[coll];
+    if(!Array.isArray(mine) || !Array.isArray(cloud)) return;
+    const keyOf = r => idField ? (r && r[idField]) : r;
+    const valid = k => k !== undefined && k !== null;
+    const have = new Set(mine.map(keyOf));
+    const missing = cloud.filter(rec=>{
+      const k = keyOf(rec);
+      return valid(k) && !have.has(k) && !intentionalDeletes.has(coll+':'+k);
+    });
+    if(missing.length === 0) return;
+
+    // クラウドの並び順のまま組み直す。単に末尾へ足すと、中身が同じでも
+    // 並びが変わったせいで「差分あり」と判定され、毎回無駄な書き込みが起きるため。
+    const localByKey = new Map();
+    mine.forEach(r=>{ const k = keyOf(r); if(valid(k)) localByKey.set(k, r); });
+    const missingKeys = new Set(missing.map(keyOf));
+    const rebuilt = [];
+    cloud.forEach(rec=>{
+      const k = keyOf(rec);
+      if(!valid(k)) return;
+      if(localByKey.has(k)){ rebuilt.push(localByKey.get(k)); localByKey.delete(k); }
+      else if(missingKeys.has(k)){ rebuilt.push(idField ? cloneData(rec) : rec); }
+    });
+    localByKey.forEach(r=> rebuilt.push(r)); // 手元にしか無い（＝新規追加）レコードは後ろへ
+    DATA[coll] = rebuilt;
+    healed = true;
+  });
+  return healed;
+}
+
+// 前回クラウドと一致していた状態から変わったキーだけを送信対象にする。
+function buildUpdates(){
+  const updates = {};
+  Object.keys(DATA).forEach(key=>{
+    if(!cloudMirror || JSON.stringify(DATA[key]) !== JSON.stringify(cloudMirror[key])){
+      updates[key] = DATA[key];
+    }
+  });
+  return updates;
+}
+
 function setSyncStatus(text, state){
   const el = document.getElementById('syncStatus');
   if(!el) return;
@@ -1543,6 +1621,9 @@ function initFirebaseSync(){
     }
     firebaseRef = firebase.database().ref(DB_PATH);
     cloudSnapshotReceived = false; // 世帯を切り替えた場合もここからやり直す
+    cloudMirror = null;            // 別世帯の状態を引きずらない
+    intentionalDeletes = new Set();
+    destructivePushAllowed = false;
     let syncPrimed = false; // 最初のスナップショットは「変化」ではないので、リセット判定の対象外にする
     firebaseRef.on('value', snapshot=>{
       const val = snapshot.val();
@@ -1556,6 +1637,10 @@ function initFirebaseSync(){
         const previousPartyNames = DATA.partyNames;
         const previousResetAt = DATA.lastFullResetAt || null;
         DATA = Object.assign(defaultData(), migrateLegacyParty(val));
+        // この時点の DATA は「クラウドの中身そのもの」。以降の補正を加える前に控えておく。
+        // 下の users / partyNames の補正はクラウドに無い内容なので、差分として送信対象になる。
+        cloudMirror = cloneData(DATA);
+        intentionalDeletes = new Set(); // クラウドに反映済み。持ち越さない
 
         // 相手が完全リセットした瞬間を検知する。
         // リセットした本人の端末は、押した時点でローカルの値も更新済みなので、ここには入らない。
@@ -1610,7 +1695,31 @@ async function pushServerData(){
     return;
   }
   try{
-    await firebaseRef.set(DATA);
+    // 完全リセットなど、全部消すことが目的の操作だけがこの経路を通る
+    if(destructivePushAllowed){
+      destructivePushAllowed = false;
+      await firebaseRef.set(DATA);
+      cloudMirror = cloneData(DATA);
+      intentionalDeletes = new Set();
+      return;
+    }
+
+    // 意図せず欠けたレコードを手元に戻してから送る（対策②の中心）
+    const healed = healFromCloudMirror();
+
+    const updates = buildUpdates();
+    if(Object.keys(updates).length > 0){
+      await firebaseRef.update(updates);
+      cloudMirror = cloneData(DATA);
+      intentionalDeletes = new Set();
+    }
+
+    if(healed){
+      saveLocalOnly();
+      applyingRemoteUpdate = true;
+      refreshAll();
+      applyingRemoteUpdate = false;
+    }
   }catch(e){
     console.error('firebase push error', e);
     serverAvailable = false;
@@ -1634,6 +1743,8 @@ async function manualSync(){
     const val = snap.val();
     if(val){
       DATA = Object.assign(defaultData(), migrateLegacyParty(val));
+      cloudMirror = cloneData(DATA); // 取得した内容がそのままクラウドの状態
+      intentionalDeletes = new Set();
       saveLocalOnly();
     }
     return true;
@@ -1810,6 +1921,7 @@ document.getElementById('hh_createBtn').addEventListener('click', async ()=>{
 function applyInitialPartyNames(a, b){
   DATA.partyNames = { a: a, b: b };
   // 名前入力より前に作られてしまった初期ユーザーは、入力名で作り直す
+  markDeleted('users', 'default-a', 'default-b'); // 作り直しは意図的な置き換え
   DATA.users = (DATA.users||[]).filter(u=> u.id !== 'default-a' && u.id !== 'default-b');
   ensureDefaultUsers();
   saveLocalOnly();
@@ -3189,6 +3301,7 @@ document.getElementById('editForm').addEventListener('submit', e=>{
 document.getElementById('deleteEntryBtn').addEventListener('click', ()=>{
   const id = document.getElementById('e_id').value;
   if(!confirm('この記録を削除しますか？')) return;
+  markDeleted('entries', id);
   DATA.entries = DATA.entries.filter(x=>x.id!==id);
   save();
   renderEntries();
@@ -3246,6 +3359,8 @@ document.getElementById('deleteFixedBtn').addEventListener('click', ()=>{
   const id = document.getElementById('x_id').value;
   if(!id) return;
   if(!confirm('この定額費用と関連する支払い履歴を削除しますか？')) return;
+  markDeleted('fixed', id);
+  markDeleted('fixedPayments', ...DATA.fixedPayments.filter(p=>p.fixedId===id).map(p=>p.id));
   DATA.fixed = DATA.fixed.filter(x=>x.id!==id);
   DATA.fixedPayments = DATA.fixedPayments.filter(p=>p.fixedId!==id);
   save();
@@ -3435,6 +3550,7 @@ function renderSettle(){
     btn.addEventListener('click', e=>{
       e.stopPropagation();
       if(!confirm('この精算記録を削除しますか？')) return;
+      markDeleted('settlements', btn.dataset.id);
       DATA.settlements = DATA.settlements.filter(x=>x.id!==btn.dataset.id);
       save();
       renderSettle();
@@ -3562,6 +3678,7 @@ document.getElementById('cancelSettlePeriodBtn').addEventListener('click', ()=>{
   const pending = getPendingSettleRequest();
   if(!pending || pending.requestedBy !== currentUser) return;
   if(!confirm('この精算申請を取り消しますか？')) return;
+  markDeleted('settlementRequests', pending.id);
   DATA.settlementRequests = DATA.settlementRequests.filter(r=>r.id!==pending.id);
   save();
   renderSettle();
@@ -3757,6 +3874,7 @@ document.getElementById('deleteUserBtn').addEventListener('click', ()=>{
   if(!u) return;
   if(id === currentUserId){ alert('自分自身は削除できません。'); return; }
   if(!confirm(`${u.name}を削除しますか？`)) return;
+  markDeleted('users', id);
   DATA.users = DATA.users.filter(x=>x.id!==id);
   save();
   userModalOverlay.classList.remove('open');
@@ -3840,6 +3958,7 @@ document.getElementById('ar_confirmBtn').addEventListener('click', ()=>{
 
   if(resetMode === 'full'){
     // 世帯（クラウド上の家計）とメンバーはそのまま。中身だけを初期状態に戻す。
+    destructivePushAllowed = true; // 全消しが目的の操作。対策②の保護を一度だけ外す
     DATA = defaultData();
     DATA.lastFullResetAt = Date.now(); // 同時にアプリを開いている相手への合図
     currentUserId = null;
@@ -3852,11 +3971,12 @@ document.getElementById('ar_confirmBtn').addEventListener('click', ()=>{
     return;
   }
 
-  DATA.entries = [];
-  DATA.fixed = [];
-  DATA.fixedPayments = [];
-  DATA.settlements = [];
-  DATA.settlementRequests = [];
+  // 記録だけを消す初期化。利用者・当事者名・カテゴリは残すので、
+  // 消す対象のレコードを「意図的な削除」として登録してから空にする。
+  ['entries','fixed','fixedPayments','settlements','settlementRequests'].forEach(coll=>{
+    markDeleted(coll, ...(DATA[coll]||[]).map(r=>r.id));
+    DATA[coll] = [];
+  });
   DATA.adminVerifications = DATA.adminVerifications.filter(v=>v.userId!==u.id);
   save();
   adminResetModalOverlay.classList.remove('open');
@@ -3870,6 +3990,7 @@ function renderSettingsChips(){
   catWrap.innerHTML = DATA.categories.map(c=>`<span class="chip">${escapeHtml(c)} <button data-del-cat="${escapeHtml(c)}" style="border:none;background:none;color:var(--danger);">×</button></span>`).join('');
   catWrap.querySelectorAll('[data-del-cat]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
+      markDeleted('categories', btn.dataset.delCat);
       DATA.categories = DATA.categories.filter(c=>c!==btn.dataset.delCat);
       save(); refreshDropdowns(); renderSettingsChips(); renderCategoryRatios();
     });
@@ -3878,6 +3999,7 @@ function renderSettingsChips(){
   perWrap.innerHTML = DATA.persons.map(p=>`<span class="chip">${escapeHtml(p)} <button data-del-per="${escapeHtml(p)}" style="border:none;background:none;color:var(--danger);">×</button></span>`).join('');
   perWrap.querySelectorAll('[data-del-per]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
+      markDeleted('persons', btn.dataset.delPer);
       DATA.persons = DATA.persons.filter(p=>p!==btn.dataset.delPer);
       save(); refreshDropdowns(); renderSettingsChips();
     });
