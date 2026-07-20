@@ -1663,6 +1663,8 @@ function initFirebaseSync(){
           refreshAll();
           applyingRemoteUpdate = false;
         }
+        // refreshAll() はログイン画面のユーザー選択までは組み直さないので、別途追随させる
+        refreshLoginUserToggle();
       } else {
         // クラウド側にまだ何もない → 今のローカルデータを初回アップロード
         pushServerData();
@@ -2117,6 +2119,19 @@ function buildUserToggle(){
   wrap.querySelectorAll('button').forEach(btn=>{
     btn.addEventListener('click', ()=> selectLoginUser(btn.dataset.userId));
   });
+}
+
+// ログイン画面を開いたまま、クラウドから利用者情報が届いたときに表示を追随させる。
+// ローカル保存が空の端末（iOSの自動削除後や機種変更直後）では、ログイン画面は
+// 初期値の「ユーザーＡ／ユーザーＢ」で組まれる。名前が届いても組み直さないと、
+// 利用者は自分の名前ではなく初期値を見たままになる。
+// showLogin() ごと呼ぶと入力中の暗証番号まで消えるので、選択肢だけを組み直す。
+function refreshLoginUserToggle(){
+  if(document.getElementById('loginOverlay').classList.contains('hidden')) return;
+  const keep = selectedLoginUserId;
+  buildUserToggle();
+  const next = (keep && getUserById(keep)) ? keep : (DATA.users[0] && DATA.users[0].id);
+  if(next) selectLoginUser(next);
 }
 
 function showLogin(){
