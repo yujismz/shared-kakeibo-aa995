@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_META: id=shared-payment-saas; name=揉めない家計簿（販売版）; version=v1.0; updated=2026-07-19 -->
+<!-- APP_META: id=shared-payment-saas; name=揉めない家計簿（販売版）; version=v1.1; updated=2026-07-21 -->
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -410,6 +410,8 @@
     padding:11px; border-radius:10px; font-size:13px; font-weight:700; margin-top:8px;
   }
   .login-error{ color:var(--danger); font-size:12px; text-align:center; margin:6px 0; min-height:14px; }
+  .login-notice{ color:var(--accent); font-size:12px; text-align:center; margin:6px 0; line-height:1.6; }
+  .login-notice:empty{ display:none; }
   .header-user{
     display:flex; align-items:center; gap:6px; font-size:11px; color:var(--sub);
   }
@@ -501,13 +503,16 @@
       <label>メールアドレス</label>
       <input type="email" id="acc_email" autocomplete="email" placeholder="example@mail.com">
     </div>
-    <div class="field">
+    <div class="field" id="acc_passwordField">
       <label>パスワード（6文字以上）</label>
       <input type="password" id="acc_password" autocomplete="current-password">
     </div>
+    <p class="small-note" id="accountResetNote" style="display:none;">ご登録のメールアドレスに、パスワードを再設定するためのリンクをお送りします。</p>
     <div class="login-error" id="accountError"></div>
+    <div class="login-notice" id="accountNotice"></div>
     <button type="button" class="btn-primary" id="accountSubmitBtn">ログイン</button>
-    <button type="button" class="link-toggle" id="accountModeToggle" style="display:block; text-align:center; margin-top:10px;">アカウントをお持ちでない方はこちら（新規登録）</button>
+    <button type="button" class="link-toggle" id="accountResetLink" style="display:block; text-align:center; margin-top:10px;">パスワードをお忘れの方はこちら</button>
+    <button type="button" class="link-toggle" id="accountModeToggle" style="display:block; text-align:center; margin-top:2px;">アカウントをお持ちでない方はこちら（新規登録）</button>
   </div>
 </div>
 
@@ -1790,19 +1795,33 @@ function initFirebaseApp(){
 }
 
 function showAccountOverlay(){
+  const overlay = document.getElementById('accountOverlay');
+  // 開き直したときは必ずログイン画面から。前回パスワード再設定で閉じた状態を引きずらせない
+  if(overlay.classList.contains('hidden')) setAccountMode('signin');
   document.getElementById('householdSetupOverlay').classList.add('hidden');
   document.getElementById('loginOverlay').classList.add('hidden');
-  document.getElementById('accountOverlay').classList.remove('hidden');
+  overlay.classList.remove('hidden');
 }
 function hideAccountOverlay(){
   document.getElementById('accountOverlay').classList.add('hidden');
 }
 function setAccountMode(mode){
   pendingAuthMode = mode;
-  document.getElementById('accountModeSub').textContent = mode==='signup' ? 'メールアドレスで新規登録' : 'メールアドレスでログイン';
-  document.getElementById('accountSubmitBtn').textContent = mode==='signup' ? '新規登録する' : 'ログイン';
-  document.getElementById('accountModeToggle').textContent = mode==='signup' ? 'すでにアカウントをお持ちの方はこちら（ログイン）' : 'アカウントをお持ちでない方はこちら（新規登録）';
+  const isReset = mode==='reset';
+  const sub = mode==='signup' ? 'メールアドレスで新規登録' : (isReset ? 'パスワードの再設定' : 'メールアドレスでログイン');
+  const submitLabel = mode==='signup' ? '新規登録する' : (isReset ? '再設定メールを送る' : 'ログイン');
+  const toggleLabel = mode==='signup' ? 'すでにアカウントをお持ちの方はこちら（ログイン）'
+                    : (isReset ? 'ログイン画面に戻る' : 'アカウントをお持ちでない方はこちら（新規登録）');
+  document.getElementById('accountModeSub').textContent = sub;
+  document.getElementById('accountSubmitBtn').textContent = submitLabel;
+  document.getElementById('accountModeToggle').textContent = toggleLabel;
+  // 再設定はメールアドレスだけで足りるので、パスワード欄は隠す
+  document.getElementById('acc_passwordField').style.display = isReset ? 'none' : '';
+  document.getElementById('accountResetNote').style.display = isReset ? '' : 'none';
+  // 「お忘れの方はこちら」はログイン時だけ出す（新規登録・再設定中には意味がない）
+  document.getElementById('accountResetLink').style.display = mode==='signin' ? 'block' : 'none';
   document.getElementById('accountError').textContent = '';
+  document.getElementById('accountNotice').textContent = '';
 }
 
 function accountErrorMessage(e){
@@ -1813,19 +1832,50 @@ function accountErrorMessage(e){
     case 'auth/user-not-found':
     case 'auth/wrong-password':
     case 'auth/invalid-credential': return 'メールアドレスまたはパスワードが正しくありません。';
+    case 'auth/too-many-requests': return 'パスワードの間違いが続いたため、この端末からのログインを一時的に停止しています。15分ほど待ってから、もう一度お試しください。';
+    case 'auth/network-request-failed': return 'インターネットに接続できませんでした。通信状況をご確認のうえ、もう一度お試しください。';
+    case 'auth/user-disabled': return 'このアカウントは現在ご利用いただけません。お問い合わせください。';
     default: return '通信に失敗しました。時間をおいて再度お試しください。';
   }
 }
 
 document.getElementById('accountModeToggle').addEventListener('click', ()=>{
-  setAccountMode(pendingAuthMode==='signup' ? 'signin' : 'signup');
+  setAccountMode(pendingAuthMode==='signup' ? 'signin' : (pendingAuthMode==='reset' ? 'signin' : 'signup'));
+});
+
+document.getElementById('accountResetLink').addEventListener('click', ()=>{
+  setAccountMode('reset');
 });
 
 document.getElementById('accountSubmitBtn').addEventListener('click', async ()=>{
   const email = document.getElementById('acc_email').value.trim();
   const password = document.getElementById('acc_password').value;
   const errEl = document.getElementById('accountError');
+  const noticeEl = document.getElementById('accountNotice');
+  const btn = document.getElementById('accountSubmitBtn');
   errEl.textContent = '';
+  noticeEl.textContent = '';
+
+  if(pendingAuthMode==='reset'){
+    if(!email){ errEl.textContent = 'メールアドレスを入力してください。'; return; }
+    btn.disabled = true;
+    try{
+      await firebase.auth().sendPasswordResetEmail(email);
+    }catch(e){
+      console.error('password reset error', e);
+      // 未登録のアドレスでも「送りました」と返す。
+      // ここで差を付けると、どのアドレスが登録済みかを外部から調べられてしまうため
+      if(!e || e.code !== 'auth/user-not-found'){
+        errEl.textContent = accountErrorMessage(e);
+        btn.disabled = false;
+        return;
+      }
+    }
+    btn.disabled = false;
+    noticeEl.textContent = '再設定メールを送信しました。メールのリンクから新しいパスワードを設定してください。（届かないときは迷惑メールフォルダもご確認ください）';
+    return;
+  }
+
   if(!email || !password){ errEl.textContent = 'メールアドレスとパスワードを入力してください。'; return; }
   try{
     if(pendingAuthMode==='signup'){
