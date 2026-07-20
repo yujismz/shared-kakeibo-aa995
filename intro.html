@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<!-- APP_META: id=shared-payment-saas-intro; name=揉めない家計簿（紹介ページ）; version=v1.1; updated=2026-07-20 -->
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>揉めない家計簿 ｜ ふたりの「払った・払ってない」をなくす家計簿</title>
+<meta name="description" content="ふたりで使う家計簿アプリ。項目ごとの承認と先払いの記録で、「これ払ったっけ？」の言い合いをなくします。無料で使えて、月額¥300のプレミアムでメール通知も。">
+<meta property="og:title" content="揉めない家計簿">
+<meta property="og:description" content="ふたりの「払った・払ってない」をなくす家計簿。無料ではじめられます。">
+<meta property="og:type" content="website">
+<meta property="og:image" content="assets/hero-top.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Yusei+Magic&family=Zen+Kurenaido&family=Klee+One&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #faf6ef;
+    --paper: #ffffff;
+    --ink: #2e2a24;
+    --sub: #8a8275;
+    --line: #e7ddc9;
+    --a: #2f6f6a;
+    --a-soft: #e3f1ee;
+    --b: #b85c3c;
+    --b-soft: #fbe9e1;
+    --accent: #c79a3a;
+    --shadow: 0 2px 10px rgba(60,50,30,0.07);
+    --radius: 14px;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Hiragino Sans","Yu Gothic",-apple-system,BlinkMacSystemFont,sans-serif;
+    line-height:1.8; -webkit-text-size-adjust:100%;
+  }
+  .wrap{ max-width:720px; margin:0 auto; padding:0 20px; }
+  img{ max-width:100%; height:auto; display:block; }
+
+  /* ---- ヒーロー（横長TOP画像版） ---- */
+  header{ padding:34px 0 36px; text-align:center; }
+  /* ロゴは「イラスト＋文字はCSS描画」の構成。文言や書体を変えても画像は作り直さない。 */
+  .hero-top{
+    position:relative; margin:0 auto 20px; max-width:640px;
+    border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); background:var(--paper);
+  }
+  .hero-top img{ width:100%; display:block; }
+  /* 狭い画面では絵の下に置く。重ねると文字が小さくなりすぎるため */
+  .logo-card{ padding:16px 14px 2px; }
+  /* 広い画面では、絵の左に空いているスペースへ重ねる */
+  @media (min-width:620px){
+    /* 絵の左上が最も空いている。家アイコンやコインの装飾は左下寄りなので、そこは避ける */
+    .logo-card{
+      position:absolute; left:5.5%; top:13%;
+      width:44%; padding:0; text-align:left;
+    }
+    /* 淡い背景に載るので、白いにじみで文字を浮かせる */
+    .logo-card h1, .logo-card .logo-sub{
+      text-shadow:0 1px 0 rgba(255,255,255,.9), 0 0 12px rgba(255,252,246,.95);
+    }
+  }
+  .logo-kitto{
+    display:inline-block; font-family:"Zen Kurenaido",cursive;
+    font-size:clamp(11px,3.6vw,15px); color:#fff; background:var(--b);
+    padding:3px 16px; border-radius:999px; transform:rotate(-2.5deg);
+    margin:0 0 8px; box-shadow:0 2px 6px rgba(0,0,0,.14);
+  }
+  h1{
+    font-family:"Yusei Magic",cursive; font-size:clamp(20px,6.6vw,30px); color:#3f3830;
+    margin:0; line-height:1.35;
+    letter-spacing:.11em; margin-right:-.11em; /* 末尾の字送り分を戻して中央を合わせる */
+  }
+  .logo-sub{
+    font-family:"Klee One",cursive; font-size:clamp(10px,3vw,12px); color:var(--sub);
+    margin:2.5% 0 0; letter-spacing:.06em;
+  }
+  .lead{ font-size:14px; color:var(--sub); margin:0; }
+
+  .cta{
+    display:inline-block; background:var(--accent); color:#fff; text-decoration:none;
+    font-weight:700; font-size:16px; padding:15px 40px; border-radius:12px;
+    box-shadow:var(--shadow); margin-top:22px;
+  }
+  .cta.secondary{ background:var(--paper); color:var(--accent); border:2px solid var(--accent); }
+  .cta-note{ font-size:12px; color:var(--sub); margin-top:10px; }
+
+  /* ---- セクション ---- */
+  section{ padding:36px 0; }
+  h2{ font-size:20px; margin:0 0 18px; text-align:center; }
+  .section-lead{ font-size:14px; color:var(--sub); text-align:center; margin:-8px 0 22px; }
+
+  .troubles{ list-style:none; padding:0; margin:0; }
+  .troubles li{
+    background:var(--paper); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px 18px; margin-bottom:10px; font-size:15px; box-shadow:var(--shadow);
+  }
+  .troubles li::before{ content:"“"; color:var(--accent); font-weight:700; margin-right:2px; }
+  .troubles li::after{ content:"”"; color:var(--accent); font-weight:700; margin-left:2px; }
+
+  /* 縦長の5コマなので、広い画面では幅を絞って背が高くなりすぎないようにする */
+  .manga{
+    background:var(--paper); border:1px solid var(--line); border-radius:var(--radius);
+    padding:10px; box-shadow:var(--shadow);
+    max-width:460px; margin:0 auto;
+  }
+  .manga img{ border-radius:8px; }
+
+  .features{ display:grid; gap:14px; }
+  .feature{
+    background:var(--paper); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px 20px; box-shadow:var(--shadow);
+  }
+  .feature h3{ font-size:16px; margin:0 0 6px; color:var(--a); }
+  .feature p{ font-size:14px; margin:0; color:var(--ink); }
+
+  /* ---- 料金 ---- */
+  .plans{ display:grid; gap:14px; }
+  .plan{
+    background:var(--paper); border:1px solid var(--line); border-radius:var(--radius);
+    padding:20px; box-shadow:var(--shadow);
+  }
+  .plan.highlight{ border:2px solid var(--accent); }
+  .plan h3{ font-size:15px; margin:0 0 4px; color:var(--sub); }
+  .price{ font-size:26px; font-weight:700; margin:0 0 10px; }
+  .price span{ font-size:13px; font-weight:400; color:var(--sub); }
+  .plan ul{ margin:0; padding-left:1.2em; font-size:14px; }
+  .plan li{ margin-bottom:4px; }
+  .badge{
+    display:inline-block; background:var(--accent); color:#fff; font-size:11px; font-weight:700;
+    padding:2px 10px; border-radius:999px; margin-bottom:8px;
+  }
+
+  .faq details{
+    background:var(--paper); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px 18px; margin-bottom:10px; box-shadow:var(--shadow);
+  }
+  .faq summary{ font-size:15px; font-weight:700; cursor:pointer; }
+  .faq p{ font-size:14px; color:var(--ink); margin:10px 0 0; }
+
+  .closing{ text-align:center; padding:44px 0 52px; }
+  .closing h2{ margin-bottom:8px; }
+
+  footer{
+    border-top:1px solid var(--line); padding:24px 0 40px;
+    font-size:12px; color:var(--sub); text-align:center;
+  }
+  footer a{ color:var(--sub); }
+  footer nav{ display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin-bottom:12px; }
+
+  @media (min-width:600px){
+    .features{ grid-template-columns:1fr 1fr; }
+    .plans{ grid-template-columns:1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="hero-top">
+      <img src="assets/hero-top.webp" alt="ソファに並んで、スマホを一緒に見ながら笑うふたり" width="1200" height="675">
+      <div class="logo-card">
+        <span class="logo-kitto">これならきっと</span>
+        <h1>揉めない家計簿</h1>
+        <p class="logo-sub">ふたりの「払った・払ってない」をなくす</p>
+      </div>
+    </div>
+    <p class="lead">ふたりで使う、共同支払い専用の家計簿です。</p>
+    <a class="cta" href="index.html">無料ではじめる</a>
+    <p class="cta-note">登録はメールアドレスだけ。カード情報は不要です。</p>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>こんなこと、ありませんか</h2>
+    <ul class="troubles">
+      <li>これ、私が「いいよ」って言ったやつだっけ…？</li>
+      <li>立て替えた分、ちゃんと覚えててくれてるかな</li>
+      <li>少額すぎて「返して」と言い出しにくい</li>
+      <li>気づいて買ってくれた分が、記録に残らない</li>
+    </ul>
+    <p class="section-lead" style="margin-top:20px;">お金の話でぎくしゃくするのは、金額よりも「記録がないこと」が原因です。</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>言われなくても、ちゃんと精算できる</h2>
+    <div class="manga">
+      <img src="assets/manga-5koma.webp" alt="スーパーで相手の欲しかったものを買っておき、数日後に「これは承認したやつだっけ？」と迷うが、アプリに項目ごとの承認と記録が残っていて安心する5コマ漫画" width="897" height="1752" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>3つの仕組みで、揉めなくなる</h2>
+    <div class="features">
+      <div class="feature">
+        <h3>項目ごとに承認</h3>
+        <p>「これは共同」「これは個人」を、その場でひとつずつ決められます。あとから「聞いてない」が起きません。</p>
+      </div>
+      <div class="feature">
+        <h3>先払いの記録</h3>
+        <p>どちらが立て替えたかを記録しておけるので、言い出しにくい少額の立て替えもきちんと残ります。</p>
+      </div>
+      <div class="feature">
+        <h3>自動で精算額を計算</h3>
+        <p>期間を選ぶだけで「どちらがいくら渡せばいいか」を計算。負担割合はカテゴリごとに変えられます。</p>
+      </div>
+      <div class="feature">
+        <h3>ふたりの端末で同期</h3>
+        <p>招待リンクを送るだけで、同じ家計をふたりで共有。それぞれのスマホから記録できます。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>料金</h2>
+    <p class="section-lead">まずは無料で。必要になったらプレミアムへ。</p>
+    <div class="plans">
+      <div class="plan">
+        <h3>無料プラン</h3>
+        <p class="price">¥0</p>
+        <ul>
+          <li>記録・承認・精算のすべて</li>
+          <li>ふたりでの共有・同期</li>
+          <li>カテゴリ別の負担割合</li>
+        </ul>
+      </div>
+      <div class="plan highlight">
+        <span class="badge">おすすめ</span>
+        <h3>プレミアムプラン</h3>
+        <p class="price">月額¥300<span>（税込）</span></p>
+        <ul>
+          <li>無料プランのすべて</li>
+          <li>記録の追加・編集を相手へ自動メール通知</li>
+          <li>年払いなら¥3,000（2ヶ月分お得）</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="faq">
+  <div class="wrap">
+    <h2>よくある質問</h2>
+    <details>
+      <summary>ふたりとも登録が必要ですか？</summary>
+      <p>はい。まず片方が家計を作り、発行された招待リンクを相手に送ると、開くだけで同じ家計に参加できます。</p>
+    </details>
+    <details>
+      <summary>無料のままでも使えますか？</summary>
+      <p>使えます。記録・承認・精算といった中心の機能は、すべて無料プランでご利用いただけます。</p>
+    </details>
+    <details>
+      <summary>銀行口座やクレジットカードとつながりますか？</summary>
+      <p>つながりません。入力した記録だけを扱うため、口座情報をお預かりすることはありません。</p>
+    </details>
+    <details>
+      <summary>夫婦でなくても使えますか？</summary>
+      <p>使えます。同居している方どうし、ご家族、友人どうしなど、ふたりで費用を分け合う場面でお使いいただけます。</p>
+    </details>
+  </div>
+</section>
+
+<section class="closing">
+  <div class="wrap">
+    <h2>お金の話を、気持ちよく。</h2>
+    <p class="lead">登録は1分。まずは無料で試してみてください。</p>
+    <a class="cta" href="index.html">無料ではじめる</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <nav>
+      <a href="terms.html">利用規約</a>
+      <a href="privacy.html">プライバシーポリシー</a>
+      <a href="tokushoho.html">特定商取引法に基づく表記</a>
+    </nav>
+    <p>揉めない家計簿</p>
+  </div>
+</footer>
+
+</body>
+</html>

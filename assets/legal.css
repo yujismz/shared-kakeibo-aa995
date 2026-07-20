@@ -1,0 +1,74 @@
+/* 法務ページ共通スタイル（利用規約・プライバシーポリシー・特商法表記） */
+:root{
+  --bg:#faf6ef; --paper:#ffffff; --ink:#2e2a24; --sub:#8a8275; --line:#e7ddc9;
+  --accent:#c79a3a; --radius:14px; --shadow:0 2px 10px rgba(60,50,30,0.07);
+}
+*{ box-sizing:border-box; }
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Hiragino Sans","Yu Gothic",-apple-system,BlinkMacSystemFont,sans-serif;
+  line-height:1.9; -webkit-text-size-adjust:100%;
+}
+.wrap{ max-width:720px; margin:0 auto; padding:0 20px; }
+
+.topbar{ border-bottom:1px solid var(--line); background:var(--paper); }
+.topbar .wrap{ display:flex; align-items:center; justify-content:space-between; padding-top:14px; padding-bottom:14px; }
+.topbar a{ color:var(--sub); text-decoration:none; font-size:13px; }
+.topbar .brand{ color:var(--ink); font-weight:700; font-size:15px; }
+
+main{ padding:30px 0 20px; }
+h1{ font-size:22px; margin:0 0 6px; }
+.updated{ font-size:12px; color:var(--sub); margin:0 0 26px; }
+h2{
+  font-size:16px; margin:30px 0 8px; padding-top:18px;
+  border-top:1px solid var(--line);
+}
+h2:first-of-type{ border-top:none; padding-top:0; }
+p{ font-size:14px; margin:0 0 12px; }
+ol,ul{ font-size:14px; padding-left:1.4em; margin:0 0 12px; }
+li{ margin-bottom:5px; }
+strong{ font-weight:700; }
+
+table{
+  width:100%; border-collapse:collapse; font-size:14px; margin:0 0 16px;
+  background:var(--paper); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow);
+}
+th,td{ border-bottom:1px solid var(--line); padding:12px 14px; text-align:left; vertical-align:top; }
+th{ background:#f6f0e4; width:34%; font-weight:700; white-space:nowrap; }
+tr:last-child th, tr:last-child td{ border-bottom:none; }
+.table-scroll{ overflow-x:auto; }
+/* 3列以上の表は、狭い画面では横スクロールで読んでもらう */
+.table-scroll table:not(.kv){ min-width:520px; }
+
+/* 項目と内容の2列表（特商法表記）は、狭い画面で縦積みにする */
+@media (max-width:560px){
+  table.kv, table.kv tbody, table.kv tr, table.kv th, table.kv td{
+    display:block; width:auto;
+  }
+  table.kv tr{ border-bottom:1px solid var(--line); }
+  table.kv tr:last-child{ border-bottom:none; }
+  table.kv th{
+    white-space:normal; border-bottom:none;
+    padding:12px 14px 2px; font-size:13px; color:var(--sub); background:transparent;
+  }
+  table.kv td{ border-bottom:none; padding:0 14px 12px; }
+}
+
+/* 運営者が記入する必要のある箇所。埋めるまで目立たせる */
+.todo{
+  background:#fff3cd; border-bottom:2px solid #d9a441;
+  padding:0 4px; font-weight:700;
+}
+
+.signature{
+  border-top:1px solid var(--line); margin-top:34px; padding-top:18px;
+  font-size:13px; color:var(--sub);
+}
+.signature p{ font-size:13px; margin:0 0 4px; }
+
+footer{
+  border-top:1px solid var(--line); margin-top:30px;
+  padding:22px 0 44px; font-size:12px; color:var(--sub); text-align:center;
+}
+footer nav{ display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin-bottom:12px; }
+footer a{ color:var(--sub); }
