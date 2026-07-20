@@ -1794,10 +1794,17 @@ function initFirebaseApp(){
   return true;
 }
 
+// 紹介ページのCTA（?signup=1）と招待リンク（?invite=）から来た人は、まず間違いなく新規。
+// 初めての人に「ログイン」を見せないよう、最初から新規登録の画面で開く
+function wantsSignupFirst(){
+  const q = new URLSearchParams(location.search);
+  return q.get('signup')==='1' || !!q.get('invite');
+}
+
 function showAccountOverlay(){
   const overlay = document.getElementById('accountOverlay');
-  // 開き直したときは必ずログイン画面から。前回パスワード再設定で閉じた状態を引きずらせない
-  if(overlay.classList.contains('hidden')) setAccountMode('signin');
+  // 開き直したときは必ず既定のモードから。前回パスワード再設定で閉じた状態を引きずらせない
+  if(overlay.classList.contains('hidden')) setAccountMode(wantsSignupFirst() ? 'signup' : 'signin');
   document.getElementById('householdSetupOverlay').classList.add('hidden');
   document.getElementById('loginOverlay').classList.add('hidden');
   overlay.classList.remove('hidden');

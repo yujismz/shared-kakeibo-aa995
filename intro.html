@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_META: id=shared-payment-saas-intro; name=揉めない家計簿（紹介ページ）; version=v1.1; updated=2026-07-20 -->
+<!-- APP_META: id=shared-payment-saas-intro; name=揉めない家計簿（紹介ページ）; version=v1.2; updated=2026-07-21 -->
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -9,7 +9,18 @@
 <meta property="og:title" content="揉めない家計簿">
 <meta property="og:description" content="ふたりの「払った・払ってない」をなくす家計簿。無料ではじめられます。">
 <meta property="og:type" content="website">
-<meta property="og:image" content="assets/hero-top.webp">
+<meta property="og:site_name" content="揉めない家計簿">
+<meta property="og:locale" content="ja_JP">
+<!-- SNSのクローラーは外部から読むため、og:url / og:image は必ず絶対URLにすること（相対パスだと画像が出ない） -->
+<meta property="og:url" content="https://yujismz.github.io/shared-kakeibo-aa995/intro.html">
+<!-- webp を読めないクローラーがあるため、OGPには JPEG を置く -->
+<meta property="og:image" content="https://yujismz.github.io/shared-kakeibo-aa995/assets/ogp.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="675">
+<meta property="og:image:alt" content="揉めない家計簿　ふたりの「払った・払ってない」をなくす">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://yujismz.github.io/shared-kakeibo-aa995/intro.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Yusei+Magic&family=Zen+Kurenaido&family=Klee+One&display=swap" rel="stylesheet">
@@ -166,7 +177,7 @@
       </div>
     </div>
     <p class="lead">ふたりで使う、共同支払い専用の家計簿です。</p>
-    <a class="cta" href="index.html">無料ではじめる</a>
+    <a class="cta" href="index.html?signup=1">無料ではじめる</a>
     <p class="cta-note">登録はメールアドレスだけ。カード情報は不要です。</p>
   </div>
 </header>
@@ -271,7 +282,7 @@
   <div class="wrap">
     <h2>お金の話を、気持ちよく。</h2>
     <p class="lead">登録は1分。まずは無料で試してみてください。</p>
-    <a class="cta" href="index.html">無料ではじめる</a>
+    <a class="cta" href="index.html?signup=1">無料ではじめる</a>
   </div>
 </section>
 
