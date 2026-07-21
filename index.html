@@ -1,10 +1,13 @@
 <!DOCTYPE html>
-<!-- APP_META: id=shared-payment-saas; name=揉めない家計簿（販売版）; version=v1.1; updated=2026-07-21 -->
+<!-- APP_META: id=shared-payment-saas; name=揉めない家計簿（販売版）; version=v1.2; updated=2026-07-22 -->
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>揉めない家計簿</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Yusei+Magic&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg: #faf6ef;
@@ -36,12 +39,13 @@
     border-bottom:1px solid var(--line);
     padding:14px 16px 0 16px;
   }
+  header.hidden, main.hidden{ display:none; }
   .title-row{
     display:flex; align-items:baseline; justify-content:space-between;
     margin-bottom:10px;
   }
   .title-row h1{
-    font-size:18px; margin:0; font-weight:700; letter-spacing:0.02em;
+    font-family:"Yusei Magic",cursive; font-size:18px; margin:0; font-weight:400; letter-spacing:0.02em;
   }
   .title-row .names{
     font-size:12px; color:var(--sub);
@@ -282,6 +286,24 @@
   .summary-grid .box .p{ font-size:11px; color:var(--sub); margin-top:2px; }
   .summary-grid .box.y .v{ color:var(--a); }
   .summary-grid .box.m .v{ color:var(--b); }
+  .summary-chart-wrap{ display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom:12px; }
+  .donut-total-label{ font-size:12px; color:var(--sub); }
+  .donut-chart{
+    width:min(240px,70vw); height:min(240px,70vw); border-radius:50%; position:relative;
+    background:conic-gradient(var(--donut-a-color,var(--a)) 0% var(--pct-a,50%), var(--donut-b-color,var(--b)) var(--pct-a,50%) 100%);
+  }
+  .donut-hole{
+    position:absolute; inset:15%; background:#fffdf9; border-radius:50%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:6px;
+  }
+  .donut-amt{ font-size:20px; font-weight:700; }
+  .donut-amt.y{ color:var(--a); }
+  .donut-amt.m{ color:var(--b); }
+  .summary-legend-row{ display:flex; gap:20px; flex-wrap:wrap; justify-content:center; }
+  .legend-item{ display:flex; align-items:center; gap:6px; font-size:13px; }
+  .legend-dot{ width:11px; height:11px; border-radius:50%; flex-shrink:0; }
+  .legend-dot.y{ background:var(--a); }
+  .legend-dot.m{ background:var(--b); }
   .unsettled-strip{
     margin-top:10px; padding:10px 12px; border-radius:10px; background:#fbe9e1; font-size:12px; color:var(--b); font-weight:600;
     display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;
@@ -392,6 +414,7 @@
     box-shadow:var(--shadow); padding:24px 20px; width:100%; max-width:360px;
   }
   .login-box h2{ font-size:16px; margin:0 0 4px; text-align:center; }
+  .login-box h2.brand{ font-family:"Yusei Magic",cursive; font-weight:400; font-size:18px; }
   .login-box .sub{ font-size:12px; color:var(--sub); text-align:center; margin-bottom:18px; }
   .role-toggle{ display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
   .role-toggle button{
@@ -497,7 +520,7 @@
 
 <div id="accountOverlay" class="hidden">
   <div class="login-box">
-    <h2>揉めない家計簿</h2>
+    <h2 class="brand">揉めない家計簿</h2>
     <div class="sub" id="accountModeSub">メールアドレスでログイン</div>
     <div class="field">
       <label>メールアドレス</label>
@@ -518,7 +541,7 @@
 
 <div id="householdSetupOverlay" class="hidden">
   <div class="login-box">
-    <h2>揉めない家計簿</h2>
+    <h2 class="brand">揉めない家計簿</h2>
     <div class="sub" id="hh_subtitle">はじめに、家計を作成／参加してください</div>
     <div id="hh_createStep">
       <p class="small-note">新しく家計を作成します。作成後、パートナーを招待するリンクが発行されます。</p>
@@ -559,7 +582,7 @@
 
 <div id="loginOverlay" class="hidden">
   <div class="login-box">
-    <h2>揉めない家計簿</h2>
+    <h2 class="brand">揉めない家計簿</h2>
     <div class="sub">ログインする人を選んでください</div>
     <div class="role-toggle" id="userToggle"></div>
     <input type="password" id="loginPin" inputmode="numeric" maxlength="8" placeholder="暗証番号（4〜8桁）">
@@ -601,7 +624,7 @@
   </div>
 </div>
 
-<header>
+<header class="hidden" id="appHeader">
   <div class="title-row">
     <h1>揉めない家計簿</h1>
     <div class="header-user">
@@ -619,7 +642,7 @@
   </nav>
 </header>
 
-<main>
+<main class="hidden" id="appMain">
 
   <!-- ===== TAB: ENTRIES ===== -->
   <section id="tab-entries">
@@ -642,10 +665,24 @@
     <div class="card summary-card">
       <h2>負担額の概要</h2>
       <select id="summaryPeriod" class="period-select"></select>
-      <div class="summary-grid">
-        <div class="box"><div class="v" id="sumTotal">¥0</div><div class="p">総計</div></div>
-        <div class="box y"><div class="v" id="sumA">¥0</div><div class="p" id="sumAPct" data-tmpl="{a}分担 0%"></div></div>
-        <div class="box m"><div class="v" id="sumB">¥0</div><div class="p" id="sumBPct" data-tmpl="{b}分担 0%"></div></div>
+      <div class="summary-chart-wrap">
+        <div class="donut-total-label" id="sumTotalLabel">総計 ¥0</div>
+        <div class="donut-chart" id="summaryDonut">
+          <div class="donut-hole">
+            <div class="donut-amt y" id="sumA">¥0</div>
+            <div class="donut-amt m" id="sumB">¥0</div>
+          </div>
+        </div>
+        <div class="summary-legend-row">
+          <div class="legend-item">
+            <span class="legend-dot y"></span>
+            <span id="legendAInfo"></span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot m"></span>
+            <span id="legendBInfo"></span>
+          </div>
+        </div>
       </div>
       <div class="unsettled-strip zero" id="unsettledStrip">未精算金額（割合確定による差分）：¥0／未確認の項目：0件</div>
       <div class="unsettled-strip zero" id="diffStrip" style="margin-top:6px;">肩代わり額との差額合計：¥0</div>
@@ -1223,7 +1260,8 @@
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
 // === 期間モード・タイル ===
 let periodMode = localStorage.getItem('kperiodMode') || 'input';
 let selTiles = [];
@@ -2201,6 +2239,8 @@ function showLogin(){
 }
 function hideLogin(){
   document.getElementById('loginOverlay').classList.add('hidden');
+  document.getElementById('appHeader').classList.remove('hidden');
+  document.getElementById('appMain').classList.remove('hidden');
 }
 function selectLoginUser(userId){
   selectedLoginUserId = userId;
@@ -3246,11 +3286,21 @@ function renderSummary(){
   const yPct = totals.total>0 ? Math.round((totals.a/totals.total)*100) : 0;
   const mPct = totals.total>0 ? 100-yPct : 0;
 
-  document.getElementById('sumTotal').textContent = yen(totals.total);
+  document.getElementById('sumTotalLabel').textContent = `総計 ${yen(totals.total)}`;
   document.getElementById('sumA').textContent = yen(totals.a);
   document.getElementById('sumB').textContent = yen(totals.b);
-  document.getElementById('sumAPct').textContent = `${nameA()}分担 ${yPct}%`;
-  document.getElementById('sumBPct').textContent = `${nameB()}分担 ${mPct}%`;
+  document.getElementById('legendAInfo').textContent = `${nameA()} ${yPct}%`;
+  document.getElementById('legendBInfo').textContent = `${nameB()} ${mPct}%`;
+  const donut = document.getElementById('summaryDonut');
+  if(totals.total > 0){
+    donut.style.setProperty('--pct-a', yPct+'%');
+    donut.style.removeProperty('--donut-a-color');
+    donut.style.removeProperty('--donut-b-color');
+  } else {
+    donut.style.setProperty('--pct-a', '100%');
+    donut.style.setProperty('--donut-a-color', 'var(--line)');
+    donut.style.setProperty('--donut-b-color', 'var(--line)');
+  }
 
   // 未精算 = 確定によって生じた差分（recordedBとの差）の合計（精算完了済みは除外）
   const unsettledOnly = entries.filter(e=>!e.settled);
