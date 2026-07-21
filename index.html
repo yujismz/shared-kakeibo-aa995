@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_META: id=shared-payment-saas; name=揉めない家計簿（販売版）; version=v1.2; updated=2026-07-22 -->
+<!-- APP_META: id=shared-payment-saas; name=揉めない家計簿（販売版）; version=v1.3; updated=2026-07-22 -->
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -416,6 +416,10 @@
   .login-box h2{ font-size:16px; margin:0 0 4px; text-align:center; }
   .login-box h2.brand{ font-family:"Yusei Magic",cursive; font-weight:400; font-size:18px; }
   .login-box .sub{ font-size:12px; color:var(--sub); text-align:center; margin-bottom:18px; }
+  .field-check{ margin:2px 0 14px; }
+  .agree-label{ display:flex; align-items:flex-start; gap:8px; font-size:12px; color:var(--sub); line-height:1.5; cursor:pointer; }
+  .agree-label input{ margin-top:2px; flex-shrink:0; }
+  .agree-label a{ color:var(--a); text-decoration:underline; }
   .role-toggle{ display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
   .role-toggle button{
     flex:1; padding:14px 8px; border-radius:12px; border:2px solid var(--line);
@@ -531,6 +535,12 @@
       <input type="password" id="acc_password" autocomplete="current-password">
     </div>
     <p class="small-note" id="accountResetNote" style="display:none;">ご登録のメールアドレスに、パスワードを再設定するためのリンクをお送りします。</p>
+    <div class="field-check" id="acc_agreeField" style="display:none;">
+      <label class="agree-label">
+        <input type="checkbox" id="acc_agree">
+        <span><a href="terms.html" target="_blank" rel="noopener">利用規約</a>と<a href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a>に同意します</span>
+      </label>
+    </div>
     <div class="login-error" id="accountError"></div>
     <div class="login-notice" id="accountNotice"></div>
     <button type="button" class="btn-primary" id="accountSubmitBtn">ログイン</button>
@@ -1863,6 +1873,9 @@ function setAccountMode(mode){
   // 再設定はメールアドレスだけで足りるので、パスワード欄は隠す
   document.getElementById('acc_passwordField').style.display = isReset ? 'none' : '';
   document.getElementById('accountResetNote').style.display = isReset ? '' : 'none';
+  // 同意チェックは新規登録のときだけ。モードが変わるたびにチェック状態もリセットする
+  document.getElementById('acc_agreeField').style.display = mode==='signup' ? '' : 'none';
+  document.getElementById('acc_agree').checked = false;
   // 「お忘れの方はこちら」はログイン時だけ出す（新規登録・再設定中には意味がない）
   document.getElementById('accountResetLink').style.display = mode==='signin' ? 'block' : 'none';
   document.getElementById('accountError').textContent = '';
@@ -1922,6 +1935,10 @@ document.getElementById('accountSubmitBtn').addEventListener('click', async ()=>
   }
 
   if(!email || !password){ errEl.textContent = 'メールアドレスとパスワードを入力してください。'; return; }
+  if(pendingAuthMode==='signup' && !document.getElementById('acc_agree').checked){
+    errEl.textContent = '利用規約とプライバシーポリシーへの同意が必要です。';
+    return;
+  }
   try{
     if(pendingAuthMode==='signup'){
       await firebase.auth().createUserWithEmailAndPassword(email, password);
