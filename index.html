@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_META: id=shared-payment-saas; name=揉めない家計簿（販売版）; version=v1.5; updated=2026-07-22 -->
+<!-- APP_META: id=shared-payment-saas; name=揉めない家計簿（販売版）; version=v1.6; updated=2026-07-22 -->
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -324,6 +324,19 @@
   .accordion-toggle .chev{ display:inline-block; transition:transform .15s; }
   .accordion-toggle.open .chev{ transform:rotate(180deg); }
   .summary-details{ margin-top:8px; }
+  .ratio-details{ margin-top:8px; }
+  #tab-settings .card > h2,
+  #tab-entries .card:not(.summary-card) > h2{
+    display:flex; align-items:center; justify-content:space-between; cursor:pointer;
+  }
+  #tab-settings .card > h2::after,
+  #tab-entries .card:not(.summary-card) > h2::after{
+    content:'▾'; font-size:12px; color:var(--sub); font-weight:400; margin-left:8px; transition:transform .15s; flex-shrink:0;
+  }
+  #tab-settings .card.collapsed > h2::after,
+  #tab-entries .card:not(.summary-card).collapsed > h2::after{ transform:rotate(-90deg); }
+  #tab-settings .card.collapsed > *:not(h2),
+  #tab-entries .card:not(.summary-card).collapsed > *:not(h2){ display:none !important; }
   .ratio-slider-row{ display:flex; align-items:center; gap:10px; margin:10px 0; }
   .ratio-slider-row input[type=range]{ flex:1; }
   .ratio-display{ font-size:13px; font-weight:700; white-space:nowrap; }
@@ -728,9 +741,6 @@
         <div class="unsettled-strip zero" id="unsettledStrip">未精算金額（割合確定による差分）：¥0／未確認の項目：0件</div>
         <div class="unsettled-strip zero" id="diffStrip" style="margin-top:6px;">肩代わり額との差額合計：¥0</div>
         <div class="excluded-strip" id="excludedStrip" style="display:none;"></div>
-        <div class="recent-btn-row">
-          <button type="button" class="btn-secondary" id="recentItemsBtn" style="width:100%;">最近追加された項目を確認</button>
-        </div>
       </div>
     </div>
 
@@ -789,23 +799,6 @@
         </div>
 
         <div class="small-note" style="margin-top:14px;">③ 精算するときの負担割合（ここでドラッグして調整）</div>
-        <div class="row2">
-          <div class="field amt-a">
-            <label data-tmpl="{a}の負担額"></label>
-            <input type="number" id="f_a" inputmode="numeric" placeholder="0">
-          </div>
-          <div class="field amt-b">
-            <label data-tmpl="{b}の負担額"></label>
-            <input type="number" id="f_b" inputmode="numeric" placeholder="0">
-          </div>
-        </div>
-        <div class="small-note" id="f_ratio_hint" style="margin-top:-4px;">カテゴリを選ぶと、設定したデフォルトの分担割合が自動で入ります。</div>
-        <div class="split-quick">
-          <button type="button" data-split="a100" data-tmpl="{a}が全額負担"></button>
-          <button type="button" data-split="b100" data-tmpl="{b}が全額負担"></button>
-          <button type="button" data-split="half">半分ずつ</button>
-          <button type="button" data-split="catdefault">カテゴリの規定割合</button>
-        </div>
         <div class="ratio-bar-wrap">
           <div class="ratio-bar" id="f_ratio_bar">
             <div class="seg-y" id="f_bar_y" data-tmpl="{a}"></div>
@@ -813,6 +806,27 @@
             <div class="handle" id="f_bar_handle"></div>
           </div>
           <div class="ratio-bar-pcts"><span class="y" id="f_bar_y_pct" data-tmpl="{a} 0%"></span><span class="m" id="f_bar_m_pct" data-tmpl="{b} 0%"></span></div>
+        </div>
+
+        <button type="button" class="accordion-toggle" id="ratioDetailsToggle">金額を個別に入力する <span class="chev">▾</span></button>
+        <div class="ratio-details" id="ratioDetails" style="display:none;">
+          <div class="row2">
+            <div class="field amt-a">
+              <label data-tmpl="{a}の負担額"></label>
+              <input type="number" id="f_a" inputmode="numeric" placeholder="0">
+            </div>
+            <div class="field amt-b">
+              <label data-tmpl="{b}の負担額"></label>
+              <input type="number" id="f_b" inputmode="numeric" placeholder="0">
+            </div>
+          </div>
+          <div class="small-note" id="f_ratio_hint" style="margin-top:-4px;">カテゴリを選ぶと、設定したデフォルトの分担割合が自動で入ります。</div>
+          <div class="split-quick">
+            <button type="button" data-split="a100" data-tmpl="{a}が全額負担"></button>
+            <button type="button" data-split="b100" data-tmpl="{b}が全額負担"></button>
+            <button type="button" data-split="half">半分ずつ</button>
+            <button type="button" data-split="catdefault">カテゴリの規定割合</button>
+          </div>
         </div>
 
         <div class="diff-note" id="f_diff_note">差額なし</div>
@@ -829,6 +843,12 @@
 
         <button type="submit" class="btn-primary">記録する</button>
       </form>
+    </div>
+
+    <div class="card">
+      <h2>最近追加された項目</h2>
+      <p class="small-note">直近で記録された支払いです。割合の確認がまだの項目は赤いボタンで分かります。</p>
+      <div id="recentList"></div>
     </div>
 
     <div class="card">
@@ -1233,15 +1253,6 @@
     <button type="button" class="btn-secondary" id="savePendingBtn" style="width:100%; margin-bottom:10px;">この内容で保存する（未確定のまま）</button>
     <button type="button" class="btn-primary" id="confirmRatioBtn" style="background:#3f8f5f;">この割合で確定する</button>
     <button type="button" class="btn-secondary" id="cancelConfirmBtn" style="width:100%; margin-top:10px;">あとで確認する</button>
-  </div>
-</div>
-
-<!-- ===== Recent Items Modal ===== -->
-<div class="modal-overlay" id="recentModalOverlay">
-  <div class="modal">
-    <h3>最近追加された項目</h3>
-    <p class="small-note">直近で記録された支払いです。割合の確認がまだの項目は赤いボタンで分かります。</p>
-    <div id="recentList"></div>
   </div>
 </div>
 
@@ -3242,7 +3253,7 @@ document.getElementById('savePendingBtn').addEventListener('click', ()=>{
   renderEntries();
   renderBalance();
   renderSummary();
-  if(recentModalOverlay.classList.contains('open')) renderRecentList();
+  renderRecentList();
 });
 
 document.getElementById('confirmRatioBtn').addEventListener('click', ()=>{
@@ -3258,30 +3269,34 @@ document.getElementById('confirmRatioBtn').addEventListener('click', ()=>{
   renderEntries();
   renderBalance();
   renderSummary();
-  if(recentModalOverlay.classList.contains('open')) renderRecentList();
+  renderRecentList();
 });
 document.getElementById('cancelConfirmBtn').addEventListener('click', ()=>{
   confirmModalOverlay.classList.remove('open');
 });
 confirmModalOverlay.addEventListener('click', e=>{ if(e.target===confirmModalOverlay) confirmModalOverlay.classList.remove('open'); });
 
-document.getElementById('summaryDetailsToggle').addEventListener('click', ()=>{
-  const details = document.getElementById('summaryDetails');
-  const btn = document.getElementById('summaryDetailsToggle');
-  const isOpen = details.style.display !== 'none';
-  details.style.display = isOpen ? 'none' : 'block';
-  btn.classList.toggle('open', !isOpen);
-  btn.childNodes[0].textContent = isOpen ? '詳細を見る ' : '詳細を閉じる ';
+function bindAccordionToggle(toggleId, detailsId, openLabel, closeLabel){
+  const btn = document.getElementById(toggleId);
+  const details = document.getElementById(detailsId);
+  if(!btn || !details) return;
+  btn.addEventListener('click', ()=>{
+    const isOpen = details.style.display !== 'none';
+    details.style.display = isOpen ? 'none' : 'block';
+    btn.classList.toggle('open', !isOpen);
+    btn.childNodes[0].textContent = isOpen ? openLabel+' ' : closeLabel+' ';
+  });
+}
+bindAccordionToggle('summaryDetailsToggle', 'summaryDetails', '詳細を見る', '詳細を閉じる');
+bindAccordionToggle('ratioDetailsToggle', 'ratioDetails', '金額を個別に入力する', '金額の個別入力を閉じる');
+
+document.querySelectorAll('#tab-settings .card > h2, #tab-entries .card:not(.summary-card) > h2').forEach(h2=>{
+  const card = h2.parentElement;
+  card.classList.add('collapsed');
+  h2.addEventListener('click', ()=> card.classList.toggle('collapsed'));
 });
 
-/* ---- recent items modal ---- */
-const recentModalOverlay = document.getElementById('recentModalOverlay');
-document.getElementById('recentItemsBtn').addEventListener('click', ()=>{
-  renderRecentList();
-  recentModalOverlay.classList.add('open');
-});
-recentModalOverlay.addEventListener('click', e=>{ if(e.target===recentModalOverlay) recentModalOverlay.classList.remove('open'); });
-
+/* ---- recent items（ページ内カード） ---- */
 function renderRecentList(){
   const wrap = document.getElementById('recentList');
   const items = DATA.entries.slice()
@@ -3312,7 +3327,7 @@ function renderRecentList(){
     </div>`;
   }).join('');
   wrap.querySelectorAll('.entry').forEach(el=>{
-    el.addEventListener('click', ()=>{ recentModalOverlay.classList.remove('open'); openEditModal(el.dataset.id); });
+    el.addEventListener('click', ()=>{ openEditModal(el.dataset.id); });
   });
   wrap.querySelectorAll('.confirm-btn').forEach(btn=>{
     btn.addEventListener('click', e=>{
@@ -4309,6 +4324,7 @@ function refreshAll(){
   renderUserManageList();
   renderMyAccount();
   renderEntries();
+  renderRecentList();
   renderFixed();
   renderSettle();
   renderBalance();
