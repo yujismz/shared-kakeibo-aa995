@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_META: id=shared-payment-saas; name=揉めない家計簿（販売版）; version=v1.4; updated=2026-07-22 -->
+<!-- APP_META: id=shared-payment-saas; name=揉めない家計簿（販売版）; version=v1.5; updated=2026-07-22 -->
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -19,6 +19,8 @@
     --a-soft: #e3f1ee;
     --b: #b85c3c;
     --b-soft: #fbe9e1;
+    --chart-y: #ef6a5a;
+    --chart-m: #3d8bd4;
     --accent: #c79a3a;
     --danger: #b3463c;
     --shadow: 0 2px 10px rgba(60,50,30,0.07);
@@ -286,24 +288,25 @@
   .summary-grid .box .p{ font-size:11px; color:var(--sub); margin-top:2px; }
   .summary-grid .box.y .v{ color:var(--a); }
   .summary-grid .box.m .v{ color:var(--b); }
-  .summary-chart-wrap{ display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom:12px; }
-  .donut-total-label{ font-size:12px; color:var(--sub); }
+  .summary-chart-wrap{ display:flex; flex-direction:column; align-items:center; gap:14px; margin-bottom:12px; }
   .donut-chart{
-    width:min(240px,70vw); height:min(240px,70vw); border-radius:50%; position:relative;
-    background:conic-gradient(var(--donut-a-color,var(--a)) 0% var(--pct-a,50%), var(--donut-b-color,var(--b)) var(--pct-a,50%) 100%);
+    width:min(150px,42vw); height:min(150px,42vw); border-radius:50%; position:relative;
+    background:conic-gradient(var(--donut-a-color,var(--chart-y)) 0% var(--pct-a,50%), var(--donut-b-color,var(--chart-m)) var(--pct-a,50%) 100%);
   }
   .donut-hole{
-    position:absolute; inset:15%; background:#fffdf9; border-radius:50%;
-    display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:6px;
+    position:absolute; inset:18%; background:#fffdf9; border-radius:50%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
   }
-  .donut-amt{ font-size:20px; font-weight:700; }
-  .donut-amt.y{ color:var(--a); }
-  .donut-amt.m{ color:var(--b); }
-  .summary-legend-row{ display:flex; gap:20px; flex-wrap:wrap; justify-content:center; }
-  .legend-item{ display:flex; align-items:center; gap:6px; font-size:13px; }
-  .legend-dot{ width:11px; height:11px; border-radius:50%; flex-shrink:0; }
-  .legend-dot.y{ background:var(--a); }
-  .legend-dot.m{ background:var(--b); }
+  .donut-hole .v{ font-size:15px; font-weight:700; color:var(--ink); }
+  .donut-hole .p{ font-size:10px; color:var(--sub); margin-top:1px; }
+  .summary-stat-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; }
+  .summary-stat{ background:var(--bg); border-radius:10px; padding:10px; text-align:center; }
+  .stat-name{ display:flex; align-items:center; justify-content:center; gap:5px; font-size:12px; color:var(--sub); }
+  .stat-amt{ font-size:17px; font-weight:700; color:var(--ink); margin-top:4px; }
+  .stat-pct{ font-size:11px; color:var(--sub); }
+  .legend-dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+  .legend-dot.y{ background:var(--chart-y); }
+  .legend-dot.m{ background:var(--chart-m); }
   .unsettled-strip{
     margin-top:10px; padding:10px 12px; border-radius:10px; background:#fbe9e1; font-size:12px; color:var(--b); font-weight:600;
     display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;
@@ -314,6 +317,13 @@
     font-size:11px; font-weight:600;
   }
   .recent-btn-row{ margin-top:10px; }
+  .accordion-toggle{
+    width:100%; background:none; border:none; border-top:1px solid var(--line); margin-top:12px; padding:10px 0 0;
+    display:flex; justify-content:center; align-items:center; gap:4px; font-size:12px; color:var(--sub); font-weight:600; cursor:pointer;
+  }
+  .accordion-toggle .chev{ display:inline-block; transition:transform .15s; }
+  .accordion-toggle.open .chev{ transform:rotate(180deg); }
+  .summary-details{ margin-top:8px; }
   .ratio-slider-row{ display:flex; align-items:center; gap:10px; margin:10px 0; }
   .ratio-slider-row input[type=range]{ flex:1; }
   .ratio-display{ font-size:13px; font-weight:700; white-space:nowrap; }
@@ -565,6 +575,22 @@
       <input type="text" id="hh_nameB" class="setup-input" maxlength="12" placeholder="例：はなこ">
       <button type="button" class="btn-primary" id="hh_namesNextBtn" style="margin-top:12px;">この名前ではじめる</button>
     </div>
+    <div id="hh_categoriesStep" style="display:none;">
+      <p class="small-note">支出のカテゴリと、対象者（誰の支出かの分類）を確認・編集できます。あとから設定画面でも変更できます。</p>
+      <label class="setup-label">カテゴリ</label>
+      <div class="chip-row" id="hh_categoryChips"></div>
+      <div class="add-toggle" style="margin-top:8px;">
+        <input type="text" id="hh_newCategory" placeholder="新しいカテゴリ名">
+        <button type="button" id="hh_addCategoryBtn">追加</button>
+      </div>
+      <label class="setup-label" style="margin-top:16px;">対象者</label>
+      <div class="chip-row" id="hh_personChips"></div>
+      <div class="add-toggle" style="margin-top:8px;">
+        <input type="text" id="hh_newPerson" placeholder="新しい対象者名">
+        <button type="button" id="hh_addPersonBtn">追加</button>
+      </div>
+      <button type="button" class="btn-primary" id="hh_categoriesNextBtn" style="margin-top:16px;">次へ</button>
+    </div>
     <div id="hh_inviteStep" style="display:none; margin-top:16px;">
       <p class="small-note">このリンクをパートナーに送ってください。開くだけで自動的に同じ家計に参加できます。</p>
       <div class="invite-link-box">
@@ -678,29 +704,33 @@
       <h2>負担額の概要</h2>
       <select id="summaryPeriod" class="period-select"></select>
       <div class="summary-chart-wrap">
-        <div class="donut-total-label" id="sumTotalLabel">総計 ¥0</div>
         <div class="donut-chart" id="summaryDonut">
           <div class="donut-hole">
-            <div class="donut-amt y" id="sumA">¥0</div>
-            <div class="donut-amt m" id="sumB">¥0</div>
+            <div class="v" id="sumTotal">¥0</div>
+            <div class="p">総計</div>
           </div>
         </div>
-        <div class="summary-legend-row">
-          <div class="legend-item">
-            <span class="legend-dot y"></span>
-            <span id="legendAInfo"></span>
+        <div class="summary-stat-grid">
+          <div class="summary-stat">
+            <div class="stat-name"><span class="legend-dot y"></span><span id="legendAName"></span></div>
+            <div class="stat-amt" id="sumA">¥0</div>
+            <div class="stat-pct" id="sumAPct">0%</div>
           </div>
-          <div class="legend-item">
-            <span class="legend-dot m"></span>
-            <span id="legendBInfo"></span>
+          <div class="summary-stat">
+            <div class="stat-name"><span class="legend-dot m"></span><span id="legendBName"></span></div>
+            <div class="stat-amt" id="sumB">¥0</div>
+            <div class="stat-pct" id="sumBPct">0%</div>
           </div>
         </div>
       </div>
-      <div class="unsettled-strip zero" id="unsettledStrip">未精算金額（割合確定による差分）：¥0／未確認の項目：0件</div>
-      <div class="unsettled-strip zero" id="diffStrip" style="margin-top:6px;">肩代わり額との差額合計：¥0</div>
-      <div class="excluded-strip" id="excludedStrip" style="display:none;"></div>
-      <div class="recent-btn-row">
-        <button type="button" class="btn-secondary" id="recentItemsBtn" style="width:100%;">最近追加された項目を確認</button>
+      <button type="button" class="accordion-toggle" id="summaryDetailsToggle">詳細を見る <span class="chev">▾</span></button>
+      <div class="summary-details" id="summaryDetails" style="display:none;">
+        <div class="unsettled-strip zero" id="unsettledStrip">未精算金額（割合確定による差分）：¥0／未確認の項目：0件</div>
+        <div class="unsettled-strip zero" id="diffStrip" style="margin-top:6px;">肩代わり額との差額合計：¥0</div>
+        <div class="excluded-strip" id="excludedStrip" style="display:none;"></div>
+        <div class="recent-btn-row">
+          <button type="button" class="btn-secondary" id="recentItemsBtn" style="width:100%;">最近追加された項目を確認</button>
+        </div>
       </div>
     </div>
 
@@ -1024,16 +1054,13 @@
       </div>
     </div>
     <div class="card">
-      <h2>エクセルから取込</h2>
-      <p class="small-note">これまで使っていた揉めない家計簿のエクセル（.xlsx）を読み込んで、支払い記録や毎月の定額費用として取り込みます。シート名「支払い」「毎月」を想定しています。取り込み内容は確認してから反映されます。</p>
-      <button class="btn-secondary" id="excelImportBtn" style="width:100%;">エクセルファイルを選択</button>
-      <input type="file" id="excelFile" accept=".xlsx,.xls" style="display:none;">
-      <div id="excelImportStatus" class="small-note" style="margin-top:8px;"></div>
+      <h2>データの保存について</h2>
+      <p class="small-note">入力するたびに、まずこの端末へ自動で保存されます。電波が繋がっていればそのままクラウドにも自動で同期され、ふたりの端末で共有されます。電波が不安定なときも記録が消えることはなく、繋がり次第、自動で追いつきます。<strong>ふだんの操作は必要ありません。</strong>同期状況はヘッダーの表示（同期済み／未同期）でいつでも確認できます。</p>
     </div>
     <div class="card">
-      <h2>データの管理</h2>
-      <p class="small-note">FIREBASE_CONFIGを設定している場合、データはクラウド経由でほかの端末と自動的に共有されます。共有がうまくいかないときは「今すぐ同期」をお試しください。</p>
-      <button class="btn-secondary" id="manualSyncBtn" style="width:100%; margin-bottom:8px;">今すぐ同期</button>
+      <h2>手動バックアップ（任意）</h2>
+      <p class="small-note">機種変更のときや、念のため手元にコピーを残したいときだけお使いください。ふだんは操作しなくて大丈夫です。</p>
+      <button class="btn-secondary" id="manualSyncBtn" style="width:100%; margin-bottom:8px;">同期を確認する</button>
       <button class="btn-secondary" id="exportBtn" style="width:100%; margin-bottom:8px;">データを書き出す（JSON）</button>
       <button class="btn-secondary" id="importBtn" style="width:100%;">データを読み込む（JSON）</button>
       <input type="file" id="importFile" accept="application/json" style="display:none;">
@@ -1042,7 +1069,7 @@
 
 </main>
 
-<footer class="note">入力したデータはこの端末（ブラウザ）に保存されます。<br>家族間の共有が必要な場合は「データを書き出す」を使ってください。</footer>
+<footer class="note">入力したデータは自動でこの端末に保存され、電波が繋がっていればパートナーとも自動で共有されます。</footer>
 
 <!-- ===== Edit Entry Modal ===== -->
 <div class="modal-overlay" id="editModalOverlay">
@@ -1278,7 +1305,6 @@
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 // === 期間モード・タイル ===
 let periodMode = localStorage.getItem('kperiodMode') || 'input';
@@ -1979,12 +2005,13 @@ function showHouseholdSetup(){
   }
 }
 
-// 世帯セットアップ画面は「作成 → 名前入力 → 招待リンク」の3ステップ。指定した1つだけを出す。
+// 世帯セットアップ画面は「作成 → 名前入力 → カテゴリ・対象者 → 招待リンク」の4ステップ。指定した1つだけを出す。
 const HH_STEPS = {
-  hh_createStep:  'はじめに、家計を作成／参加してください',
-  hh_namesStep:   'ステップ 1/2　おふたりのお名前',
-  hh_inviteStep:  'ステップ 2/2　パートナーを招待',
-  hh_joiningStep: 'はじめに、家計を作成／参加してください',
+  hh_createStep:      'はじめに、家計を作成／参加してください',
+  hh_namesStep:       'ステップ 1/3　おふたりのお名前',
+  hh_categoriesStep:  'ステップ 2/3　カテゴリ・対象者',
+  hh_inviteStep:      'ステップ 3/3　パートナーを招待',
+  hh_joiningStep:     'はじめに、家計を作成／参加してください',
 };
 function showHouseholdSetupStep(stepId){
   Object.keys(HH_STEPS).forEach(id=>{
@@ -2092,8 +2119,13 @@ document.getElementById('hh_namesNextBtn').addEventListener('click', ()=>{
     refreshAll();
     showLogin(); // 作り直した初期ユーザーで入り直してもらう
   } else {
-    showHouseholdSetupStep('hh_inviteStep');
+    renderSettingsChips();
+    showHouseholdSetupStep('hh_categoriesStep');
   }
+});
+
+document.getElementById('hh_categoriesNextBtn').addEventListener('click', ()=>{
+  showHouseholdSetupStep('hh_inviteStep');
 });
 
 document.getElementById('hh_copyInviteBtn').addEventListener('click', async ()=>{
@@ -3233,6 +3265,15 @@ document.getElementById('cancelConfirmBtn').addEventListener('click', ()=>{
 });
 confirmModalOverlay.addEventListener('click', e=>{ if(e.target===confirmModalOverlay) confirmModalOverlay.classList.remove('open'); });
 
+document.getElementById('summaryDetailsToggle').addEventListener('click', ()=>{
+  const details = document.getElementById('summaryDetails');
+  const btn = document.getElementById('summaryDetailsToggle');
+  const isOpen = details.style.display !== 'none';
+  details.style.display = isOpen ? 'none' : 'block';
+  btn.classList.toggle('open', !isOpen);
+  btn.childNodes[0].textContent = isOpen ? '詳細を見る ' : '詳細を閉じる ';
+});
+
 /* ---- recent items modal ---- */
 const recentModalOverlay = document.getElementById('recentModalOverlay');
 document.getElementById('recentItemsBtn').addEventListener('click', ()=>{
@@ -3311,11 +3352,13 @@ function renderSummary(){
   const yPct = totals.total>0 ? Math.round((totals.a/totals.total)*100) : 0;
   const mPct = totals.total>0 ? 100-yPct : 0;
 
-  document.getElementById('sumTotalLabel').textContent = `総計 ${yen(totals.total)}`;
+  document.getElementById('sumTotal').textContent = yen(totals.total);
   document.getElementById('sumA').textContent = yen(totals.a);
   document.getElementById('sumB').textContent = yen(totals.b);
-  document.getElementById('legendAInfo').textContent = `${nameA()} ${yPct}%`;
-  document.getElementById('legendBInfo').textContent = `${nameB()} ${mPct}%`;
+  document.getElementById('legendAName').textContent = nameA();
+  document.getElementById('legendBName').textContent = nameB();
+  document.getElementById('sumAPct').textContent = `${yPct}%`;
+  document.getElementById('sumBPct').textContent = `${mPct}%`;
   const donut = document.getElementById('summaryDonut');
   if(totals.total > 0){
     donut.style.setProperty('--pct-a', yPct+'%');
@@ -4132,25 +4175,29 @@ document.getElementById('ar_confirmBtn').addEventListener('click', ()=>{
 });
 
 /* ===================== SETTINGS ===================== */
+function renderChipsInto(wrapId, items, delDataAttr, onDelete){
+  const wrap = document.getElementById(wrapId);
+  if(!wrap) return;
+  wrap.innerHTML = items.map(x=>`<span class="chip">${escapeHtml(x)} <button data-${delDataAttr}="${escapeHtml(x)}" style="border:none;background:none;color:var(--danger);">×</button></span>`).join('');
+  wrap.querySelectorAll(`[data-${delDataAttr}]`).forEach(btn=>{
+    btn.addEventListener('click', ()=> onDelete(btn.dataset[delDataAttr.replace(/-([a-z])/g, (_,c)=>c.toUpperCase())]));
+  });
+}
 function renderSettingsChips(){
-  const catWrap = document.getElementById('categoryChips');
-  catWrap.innerHTML = DATA.categories.map(c=>`<span class="chip">${escapeHtml(c)} <button data-del-cat="${escapeHtml(c)}" style="border:none;background:none;color:var(--danger);">×</button></span>`).join('');
-  catWrap.querySelectorAll('[data-del-cat]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      markDeleted('categories', btn.dataset.delCat);
-      DATA.categories = DATA.categories.filter(c=>c!==btn.dataset.delCat);
-      save(); refreshDropdowns(); renderSettingsChips(); renderCategoryRatios();
-    });
-  });
-  const perWrap = document.getElementById('personChips');
-  perWrap.innerHTML = DATA.persons.map(p=>`<span class="chip">${escapeHtml(p)} <button data-del-per="${escapeHtml(p)}" style="border:none;background:none;color:var(--danger);">×</button></span>`).join('');
-  perWrap.querySelectorAll('[data-del-per]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      markDeleted('persons', btn.dataset.delPer);
-      DATA.persons = DATA.persons.filter(p=>p!==btn.dataset.delPer);
-      save(); refreshDropdowns(); renderSettingsChips();
-    });
-  });
+  const onDeleteCat = c=>{
+    markDeleted('categories', c);
+    DATA.categories = DATA.categories.filter(x=>x!==c);
+    save(); refreshDropdowns(); renderSettingsChips(); renderCategoryRatios();
+  };
+  renderChipsInto('categoryChips', DATA.categories, 'del-cat', onDeleteCat);
+  renderChipsInto('hh_categoryChips', DATA.categories, 'del-cat', onDeleteCat);
+  const onDeletePer = p=>{
+    markDeleted('persons', p);
+    DATA.persons = DATA.persons.filter(x=>x!==p);
+    save(); refreshDropdowns(); renderSettingsChips();
+  };
+  renderChipsInto('personChips', DATA.persons, 'del-per', onDeletePer);
+  renderChipsInto('hh_personChips', DATA.persons, 'del-per', onDeletePer);
 }
 
 function renderCategoryRatios(){
@@ -4183,8 +4230,8 @@ function renderCategoryRatios(){
   });
 }
 
-document.getElementById('addCategoryBtn').addEventListener('click', ()=>{
-  const input = document.getElementById('newCategory');
+function addCategoryFromInput(inputId){
+  const input = document.getElementById(inputId);
   const v = input.value.trim();
   if(!v) return;
   if(!DATA.categories.includes(v)) DATA.categories.push(v);
@@ -4192,144 +4239,19 @@ document.getElementById('addCategoryBtn').addEventListener('click', ()=>{
   if(!(v in DATA.categoryRatios)) DATA.categoryRatios[v] = 50;
   input.value='';
   save(); refreshDropdowns(); renderSettingsChips(); renderCategoryRatios();
-});
-document.getElementById('addPersonBtn').addEventListener('click', ()=>{
-  const input = document.getElementById('newPerson');
+}
+function addPersonFromInput(inputId){
+  const input = document.getElementById(inputId);
   const v = input.value.trim();
   if(!v) return;
   if(!DATA.persons.includes(v)) DATA.persons.push(v);
   input.value='';
   save(); refreshDropdowns(); renderSettingsChips();
-});
-
-/* ===================== EXCEL IMPORT ===================== */
-document.getElementById('excelImportBtn').addEventListener('click', ()=>{
-  document.getElementById('excelFile').click();
-});
-
-function excelDateToStr(v){
-  if(v instanceof Date && !isNaN(v)){
-    return v.getFullYear()+'-'+String(v.getMonth()+1).padStart(2,'0')+'-'+String(v.getDate()).padStart(2,'0');
-  }
-  if(typeof v === 'string' && v.trim()){
-    // try to parse common formats
-    const d = new Date(v);
-    if(!isNaN(d)) return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  }
-  return null;
 }
-function numOr0(v){
-  const n = parseFloat(v);
-  return isNaN(n) ? 0 : n;
-}
-
-document.getElementById('excelFile').addEventListener('change', e=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  const statusEl = document.getElementById('excelImportStatus');
-  statusEl.textContent = '読み込み中…';
-  const reader = new FileReader();
-  reader.onload = evt=>{
-    try{
-      const wb = XLSX.read(evt.target.result, {type:'array', cellDates:true});
-      const newEntries = [];
-      const newFixed = [];
-
-      wb.SheetNames.forEach(sheetName=>{
-        const ws = wb.Sheets[sheetName];
-        const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:false, dateNF:'yyyy-mm-dd'});
-        if(!rows || rows.length < 2) return;
-
-        // re-read this sheet with cellDates for accurate date objects
-        const rowsDates = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
-
-        const header = rowsDates[0] || [];
-        const headerStr = header.map(h=> (h||'').toString());
-
-        const looksLikePayments = headerStr.some(h=>h.includes('支払日')) && headerStr.some(h=>h.includes('支払総額'));
-        const looksLikeMonthly = headerStr.some(h=>h.includes('契約日')) || headerStr.some(h=>h.includes('合計'));
-
-        if(looksLikePayments){
-          // known template: A=date, B=category, C=person, D=item, E=total, F=a, G=b
-          for(let i=1;i<rowsDates.length;i++){
-            const r = rowsDates[i];
-            if(!r) continue;
-            const dateStr = excelDateToStr(r[0]);
-            const item = r[3];
-            if(!dateStr || !item) continue; // skip totals / blank rows
-            newEntries.push({
-              id: uid(),
-              date: dateStr,
-              category: (r[1]||'').toString().trim() || 'その他',
-              person: (r[2]||'').toString().trim() || '共通',
-              item: item.toString().trim(),
-              total: numOr0(r[4]),
-              paidA: numOr0(r[4]),
-              paidB: 0,
-              a: numOr0(r[5]),
-              b: numOr0(r[6]),
-              recordedA: numOr0(r[5]),
-              recordedB: numOr0(r[6]),
-              excluded: false,
-              confirmed: false,
-              confirmedAt: null,
-              confirmedBy: null,
-              createdBy: null,
-              lastModifiedBy: null,
-              createdAt: Date.now(),
-              memo: '(エクセルから取込)',
-            });
-          }
-        } else if(looksLikeMonthly){
-          // known template: A=契約日, B=名称, C=プラン, ... H=合計
-          for(let i=1;i<rowsDates.length;i++){
-            const r = rowsDates[i];
-            if(!r) continue;
-            const name = r[1];
-            const amount = numOr0(r[7]);
-            if(!name || !amount) continue;
-            newFixed.push({
-              id: uid(),
-              name: name.toString().trim(),
-              plan: (r[2]||'').toString().trim(),
-              amount: amount,
-              a: 0,
-              b: 0,
-              payday: null,
-            });
-          }
-        }
-      });
-
-      if(newEntries.length===0 && newFixed.length===0){
-        statusEl.textContent = '取込できる内容が見つかりませんでした。シート構成をご確認ください。';
-        return;
-      }
-
-      let msg = '取り込み内容：\n';
-      if(newEntries.length) msg += `支払い記録 ${newEntries.length}件\n`;
-      if(newFixed.length) msg += `毎月の定額費用 ${newFixed.length}件（分担額は0で登録されるため、後で編集してください）\n`;
-      msg += '\n現在のデータに追加します。よろしいですか？';
-
-      if(!confirm(msg)){
-        statusEl.textContent = '取込をキャンセルしました。';
-        e.target.value = '';
-        return;
-      }
-
-      newEntries.forEach(en=>{ DATA.entries.push(en); rememberItem(en.item); });
-      newFixed.forEach(f=> DATA.fixed.push(f));
-      save();
-      refreshAll();
-      statusEl.textContent = `取込が完了しました（支払い記録 ${newEntries.length}件 / 定額費用 ${newFixed.length}件）。`;
-    }catch(err){
-      console.error(err);
-      statusEl.textContent = '読み込みに失敗しました。ファイル形式をご確認ください。';
-    }
-    e.target.value = '';
-  };
-  reader.readAsArrayBuffer(file);
-});
+document.getElementById('addCategoryBtn').addEventListener('click', ()=> addCategoryFromInput('newCategory'));
+document.getElementById('addPersonBtn').addEventListener('click', ()=> addPersonFromInput('newPerson'));
+document.getElementById('hh_addCategoryBtn').addEventListener('click', ()=> addCategoryFromInput('hh_newCategory'));
+document.getElementById('hh_addPersonBtn').addEventListener('click', ()=> addPersonFromInput('hh_newPerson'));
 
 /* ===================== IMPORT / EXPORT ===================== */
 document.getElementById('manualSyncBtn').addEventListener('click', async ()=>{
