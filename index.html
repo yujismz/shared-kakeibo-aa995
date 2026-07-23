@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_META: id=shared-payment-saas; name=揉めない家計簿（販売版）; version=v1.6; updated=2026-07-22 -->
+<!-- APP_META: id=shared-payment-saas; name=揉めない家計簿（販売版）; version=v1.7; updated=2026-07-22 -->
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -12,19 +12,46 @@
   :root{
     --bg: #faf6ef;
     --paper: #ffffff;
+    --surface: #fffdf9;
     --ink: #2e2a24;
     --sub: #8a8275;
     --line: #e7ddc9;
     --a: #2f6f6a;
     --a-soft: #e3f1ee;
+    --a-dark: #234f4b;
     --b: #b85c3c;
     --b-soft: #fbe9e1;
+    --b-dark: #8a3f28;
     --chart-y: #ef6a5a;
     --chart-m: #3d8bd4;
     --accent: #c79a3a;
     --danger: #b3463c;
     --shadow: 0 2px 10px rgba(60,50,30,0.07);
     --radius: 14px;
+  }
+  :root[data-theme="earth"]{
+    --bg:#f2ece0; --paper:#fdfaf3; --surface:#fdfaf3; --ink:#3d3226; --sub:#8a7a5f; --line:#ded2ba;
+    --a:#b5592f; --a-soft:#f3e2d6; --a-dark:#7a3a1d; --b:#1f78a0; --b-soft:#dcedf2; --b-dark:#144a5c;
+    --chart-y:#b5592f; --chart-m:#1f78a0;
+    --accent:#8a6d3f; --danger:#a8402b;
+  }
+  :root[data-theme="green"]{
+    --bg:#f1f6ee; --paper:#ffffff; --surface:#ffffff; --ink:#2d3a2a; --sub:#8a9a82; --line:#dbe7d4;
+    --a:#256b38; --a-soft:#dcece0; --a-dark:#173f20; --b:#7abf68; --b-soft:#eaf5e3; --b-dark:#4a8a42;
+    --chart-y:#256b38; --chart-m:#7abf68;
+    --accent:#4a8a52; --danger:#b3463c;
+  }
+  :root[data-theme="blue"]{
+    --bg:#eef4fa; --paper:#ffffff; --surface:#ffffff; --ink:#26313d; --sub:#8592a0; --line:#dbe6f0;
+    --a:#1a5490; --a-soft:#dceaf5; --a-dark:#0f3560; --b:#6bb0e8; --b-soft:#e7f3fc; --b-dark:#2a6ea0;
+    --chart-y:#1a5490; --chart-m:#6bb0e8;
+    --accent:#3d7ab8; --danger:#b3463c;
+  }
+  :root[data-theme="pink"]{
+    --bg:#fbf1f4; --paper:#ffffff; --surface:#ffffff; --ink:#4a323c; --sub:#a68c96; --line:#f2dde6;
+    --a:#a03d68; --a-soft:#f5e0e8; --a-dark:#6b2144; --b:#e88ba8; --b-soft:#fceef2; --b-dark:#b5567a;
+    --chart-y:#a03d68; --chart-m:#e88ba8;
+    --accent:#d9698f; --danger:#b8502f;
   }
   *{box-sizing:border-box;}
   body{
@@ -37,7 +64,7 @@
   }
   header{
     position:sticky; top:0; z-index:20;
-    background:linear-gradient(180deg, #fffdf8 0%, #faf6ef 100%);
+    background:linear-gradient(180deg, var(--paper) 0%, var(--bg) 100%);
     border-bottom:1px solid var(--line);
     padding:14px 16px 0 16px;
   }
@@ -90,12 +117,12 @@
     color:#fff;
     margin-bottom:14px;
     box-shadow:var(--shadow);
-    background: linear-gradient(135deg, var(--a), #234f4b);
+    background: linear-gradient(135deg, var(--a), var(--a-dark));
     transition:background 0.3s;
   }
-  .balance-banner.b-owes{ background: linear-gradient(135deg, var(--a), #234f4b); }
-  .balance-banner.a-owes{ background: linear-gradient(135deg, var(--b), #8a3f28); }
-  .balance-banner.flat{ background: linear-gradient(135deg, #6b6358, #4a443b); }
+  .balance-banner.b-owes{ background: linear-gradient(135deg, var(--a), var(--a-dark)); }
+  .balance-banner.a-owes{ background: linear-gradient(135deg, var(--b), var(--b-dark)); }
+  .balance-banner.flat{ background: linear-gradient(135deg, var(--sub), var(--ink)); }
   .balance-banner .label{ font-size:12px; opacity:0.85; margin-bottom:4px; }
   .balance-banner .amount{ font-size:30px; font-weight:700; letter-spacing:0.01em; }
   .balance-banner .sub{ font-size:12px; opacity:0.85; margin-top:6px; }
@@ -119,7 +146,7 @@
     border:1px solid var(--line);
     border-radius:10px;
     font-size:15px;
-    background:#fffdf9;
+    background:var(--surface);
     color:var(--ink);
     font-family:inherit;
   }
@@ -186,8 +213,8 @@
     display:flex; height:7px; border-radius:4px; overflow:hidden; margin-top:5px;
     width:100%; box-shadow:inset 0 0 0 1px var(--line);
   }
-  .mini-bar .mb-y{ background:#2f6fb0; height:100%; }
-  .mini-bar .mb-m{ background:#c0392b; height:100%; }
+  .mini-bar .mb-y{ background:var(--a); height:100%; }
+  .mini-bar .mb-m{ background:var(--b); height:100%; }
   .row-diff{ margin-top:4px; font-size:11px; font-weight:700; }
   .row-diff.to-a{ color:var(--b); }
   .row-diff.to-b{ color:var(--a); }
@@ -203,7 +230,7 @@
   .totals-strip .num{ font-size:16px; font-weight:700; }
   .totals-strip .lbl{ font-size:11px; color:var(--sub); margin-top:2px;}
   .fixed-item{
-    border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:10px; background:#fffdf9;
+    border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:10px; background:var(--surface);
   }
   .fixed-item .top{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
   .fixed-item .name{ font-weight:700; font-size:14px; }
@@ -282,7 +309,7 @@
   .summary-card .period-select{ margin-bottom:10px; }
   .summary-grid{ display:flex; gap:8px; flex-wrap:wrap; }
   .summary-grid .box{
-    flex:1; min-width:90px; background:#fffdf9; border:1px solid var(--line); border-radius:10px; padding:10px; text-align:center;
+    flex:1; min-width:90px; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px; text-align:center;
   }
   .summary-grid .box .v{ font-size:15px; font-weight:700; }
   .summary-grid .box .p{ font-size:11px; color:var(--sub); margin-top:2px; }
@@ -294,7 +321,7 @@
     background:conic-gradient(var(--donut-a-color,var(--chart-y)) 0% var(--pct-a,50%), var(--donut-b-color,var(--chart-m)) var(--pct-a,50%) 100%);
   }
   .donut-hole{
-    position:absolute; inset:18%; background:#fffdf9; border-radius:50%;
+    position:absolute; inset:18%; background:var(--surface); border-radius:50%;
     display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
   }
   .donut-hole .v{ font-size:15px; font-weight:700; color:var(--ink); }
@@ -318,9 +345,11 @@
   }
   .recent-btn-row{ margin-top:10px; }
   .accordion-toggle{
-    width:100%; background:none; border:none; border-top:1px solid var(--line); margin-top:12px; padding:10px 0 0;
+    width:100%; background:var(--surface); border:none; border-radius:10px; margin-top:12px; padding:10px 14px;
     display:flex; justify-content:center; align-items:center; gap:4px; font-size:12px; color:var(--sub); font-weight:600; cursor:pointer;
+    box-shadow:2px 2px 0 rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.5); transition:all 0.1s;
   }
+  .accordion-toggle:active{ box-shadow:0 0, inset 0 2px 4px rgba(0,0,0,0.1); transform:translateY(2px); }
   .accordion-toggle .chev{ display:inline-block; transition:transform .15s; }
   .accordion-toggle.open .chev{ transform:rotate(180deg); }
   .summary-details{ margin-top:8px; }
@@ -328,7 +357,15 @@
   #tab-settings .card > h2,
   #tab-entries .card:not(.summary-card) > h2{
     display:flex; align-items:center; justify-content:space-between; cursor:pointer;
+    background:var(--surface); border-radius:10px; padding:12px 14px; margin:-4px -4px 12px -4px;
+    box-shadow:2px 2px 0 rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.5); transition:all 0.1s;
   }
+  #tab-settings .card > h2:active,
+  #tab-entries .card:not(.summary-card) > h2:active{
+    box-shadow:0 0, inset 0 2px 4px rgba(0,0,0,0.1); transform:translateY(2px);
+  }
+  #tab-settings .card.collapsed > h2,
+  #tab-entries .card:not(.summary-card).collapsed > h2{ margin-bottom:-4px; }
   #tab-settings .card > h2::after,
   #tab-entries .card:not(.summary-card) > h2::after{
     content:'▾'; font-size:12px; color:var(--sub); font-weight:400; margin-left:8px; transition:transform .15s; flex-shrink:0;
@@ -352,12 +389,12 @@
   }
   .ratio-bar.locked{ cursor:not-allowed; opacity:0.6; }
   .ratio-bar .seg-y{
-    position:absolute; left:0; top:0; height:100%; background:#2f6fb0;
+    position:absolute; left:0; top:0; height:100%; background:var(--a);
     display:flex; align-items:center; justify-content:flex-start; padding-left:10px;
     color:#fff; font-size:12px; font-weight:700; white-space:nowrap; overflow:hidden;
   }
   .ratio-bar .seg-m{
-    position:absolute; right:0; top:0; height:100%; background:#c0392b;
+    position:absolute; right:0; top:0; height:100%; background:var(--b);
     display:flex; align-items:center; justify-content:flex-end; padding-right:10px;
     color:#fff; font-size:12px; font-weight:700; white-space:nowrap; overflow:hidden;
   }
@@ -979,6 +1016,28 @@
     </div>
 
     <div class="card">
+      <h2>🎨 テーマカラー</h2>
+      <p class="small-note">アプリ全体の配色を切り替えられます。</p>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
+          <input type="radio" name="themeColor" value="default" onchange="applyTheme(this.value)"> 現状（赤×青）
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
+          <input type="radio" name="themeColor" value="earth" onchange="applyTheme(this.value)"> アース系
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
+          <input type="radio" name="themeColor" value="green" onchange="applyTheme(this.value)"> グリーン系
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
+          <input type="radio" name="themeColor" value="blue" onchange="applyTheme(this.value)"> ブルー系
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
+          <input type="radio" name="themeColor" value="pink" onchange="applyTheme(this.value)"> 淡いピンク系
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
       <h2>マイアカウント</h2>
       <p class="small-note">ログイン中の自分の名前・メールアドレス・暗証番号を変更できます。</p>
       <div class="field">
@@ -1317,6 +1376,18 @@
 </div>
 
 <script>
+// === テーマカラー ===
+function applyTheme(theme){
+  document.documentElement.setAttribute('data-theme', theme);
+  try{ localStorage.setItem('kThemeColor', theme); }catch(e){}
+  document.querySelectorAll('input[name="themeColor"]').forEach(function(r){ r.checked=(r.value===theme); });
+}
+(function initTheme(){
+  var saved = 'default';
+  try{ saved = localStorage.getItem('kThemeColor') || 'default'; }catch(e){}
+  applyTheme(saved);
+})();
+
 // === 期間モード・タイル ===
 let periodMode = localStorage.getItem('kperiodMode') || 'input';
 let selTiles = [];
