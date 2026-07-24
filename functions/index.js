@@ -12,8 +12,8 @@ const STRIPE_SECRET_KEY = defineSecret("STRIPE_SECRET_KEY");
 const STRIPE_WEBHOOK_SECRET = defineSecret("STRIPE_WEBHOOK_SECRET");
 
 // Price IDは秘密情報ではないので直接記載。テスト⇔本番切り替え時はここを差し替える。
-const STRIPE_PRICE_MONTHLY = "price_1TuvdgA9PEdE0jGyzCwGhDQT"; // テスト環境: 月額¥300
-const STRIPE_PRICE_YEARLY = "price_1Tuve5A9PEdE0jGyKwanHPRN"; // テスト環境: 年額¥3,000
+const STRIPE_PRICE_MONTHLY = "price_1TuujsA9PEdE0jGynMUiaReV"; // 本番環境: 月額¥300
+const STRIPE_PRICE_YEARLY = "price_1TuuoNA9PEdE0jGyOKwugPx2"; // 本番環境: 年額¥3,000
 const APP_URL = "https://shared-kakeibo-aa995.web.app/";
 
 // ログイン中ユーザーが所属する世帯IDを取得する
