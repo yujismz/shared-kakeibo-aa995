@@ -1,4 +1,15 @@
 {
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "functions/**",
+      "skills-lock.json",
+      ".agents/**"
+    ]
+  },
   "functions": [
     {
       "source": "functions",
