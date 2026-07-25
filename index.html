@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_META: id=shared-payment-saas; name=揉めない家計簿（販売版）; version=v1.7; updated=2026-07-22 -->
+<!-- APP_META: id=shared-payment-saas; name=揉めない家計簿（販売版）; version=v1.8; updated=2026-07-25 -->
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -75,6 +75,12 @@
   }
   .title-row h1{
     font-family:"Yusei Magic",cursive; font-size:18px; margin:0; font-weight:400; letter-spacing:0.02em;
+  }
+  .premium-badge{
+    display:inline-block; margin-left:8px; font-family:"Hiragino Sans","Yu Gothic",-apple-system,BlinkMacSystemFont,sans-serif;
+    font-size:10px; font-weight:700; letter-spacing:0.02em; vertical-align:middle;
+    color:#fff; background:var(--accent); padding:3px 9px; border-radius:999px;
+    box-shadow:1px 1px 0 rgba(0,0,0,0.15);
   }
   .title-row .names{
     font-size:12px; color:var(--sub);
@@ -714,7 +720,7 @@
 
 <header class="hidden" id="appHeader">
   <div class="title-row">
-    <h1>揉めない家計簿</h1>
+    <h1>揉めない家計簿<span class="premium-badge" id="premiumBadge" style="display:none;">✨ プレミアム</span></h1>
     <div class="header-user">
       <span id="syncStatus" class="sync-status"></span>
       <span>ログイン中：</span><span class="me" id="headerMe"></span>
@@ -4422,12 +4428,14 @@ function initPremiumSync(){
     isPremium = false;
     statusEl.textContent = 'クラウド同期が未設定のため、プレミアムプランはご利用いただけません。';
     buttonsEl.style.display = 'none';
+    document.getElementById('premiumBadge').style.display = 'none';
     return;
   }
   premiumRef = firebase.database().ref('households/'+currentHouseholdId+'/premium');
   premiumRef.on('value', snap=>{
     const p = snap.val();
     isPremium = !!(p && p.active);
+    document.getElementById('premiumBadge').style.display = isPremium ? 'inline-block' : 'none';
     if(isPremium){
       const planLabel = p.plan === 'yearly' ? '年額' : '月額';
       statusEl.textContent = `プレミアム会員です（${planLabel}プラン）。支払い記録の追加・編集時に相手へ自動でメール通知が届きます。`;
