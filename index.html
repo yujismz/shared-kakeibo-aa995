@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_META: id=shared-payment-saas; name=揉めない家計簿（販売版）; version=v1.8; updated=2026-07-25 -->
+<!-- APP_META: id=shared-payment-saas; name=揉めない家計簿（販売版）; version=v1.9; updated=2026-07-26 -->
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -1068,6 +1068,7 @@
         <label>メールアドレス（パスワード再設定や通知に使用）</label>
         <input type="email" id="my_email" placeholder="example@example.com">
       </div>
+      <p class="small-note">💡 相手のメールアドレスも下の「パートナーを招待」欄に登録しておくと、招待リンクをメールで簡単に送れます。</p>
       <button type="button" class="btn-secondary" id="saveMyProfileBtn" style="width:100%;">名前・メールアドレスを保存</button>
 
       <hr style="margin:16px 0; border:none; border-top:1px solid var(--line);">
@@ -1082,6 +1083,21 @@
       </div>
       <div class="login-error" id="my_pinError"></div>
       <button type="button" class="btn-secondary" id="changeMyPinBtn" style="width:100%;">暗証番号を変更</button>
+    </div>
+
+    <div class="card">
+      <h2>👥 パートナーを招待</h2>
+      <p class="small-note">この家計に参加してもらうための招待リンクです。まだ招待していない場合や、リンクが分からなくなった場合はここから確認できます。</p>
+      <div class="invite-link-box">
+        <input type="text" id="settingsInviteLinkInput" readonly>
+        <button type="button" class="btn-secondary" id="settingsCopyInviteBtn">コピー</button>
+      </div>
+      <div class="field" style="margin-top:12px;">
+        <label>パートナーのメールアドレス（任意）</label>
+        <input type="email" id="settingsPartnerEmail" placeholder="example@example.com">
+      </div>
+      <p class="small-note">登録しておくと、招待リンクをメールで簡単に送れます。</p>
+      <button type="button" class="btn-secondary" id="sendInviteEmailBtn" style="width:100%;">✉️ 招待メールを送る</button>
     </div>
 
     <div class="card">
@@ -1582,6 +1598,7 @@ function defaultData(){
     users: [],
     pendingResets: [],
     adminVerifications: [],
+    inviteEmail: '',
     // 完全リセットが実行された時刻。同時にアプリを開いている相手側が
     // 「リセットされた」ことに気づくための目印として使う（下の initFirebaseSync 参照）
     lastFullResetAt: null
@@ -4185,6 +4202,61 @@ document.getElementById('saveMyProfileBtn').addEventListener('click', ()=>{
   renderUserManageList();
   alert('保存しました。');
 });
+/* ===================== パートナーを招待（項目設定タブ） ===================== */
+function renderInviteCard(){
+  const linkInput = document.getElementById('settingsInviteLinkInput');
+  if(linkInput){
+    linkInput.value = currentHouseholdId ? (location.origin + location.pathname + '?invite=' + currentHouseholdId) : '';
+  }
+  const emailInput = document.getElementById('settingsPartnerEmail');
+  if(emailInput) emailInput.value = DATA.inviteEmail || '';
+}
+document.getElementById('settingsCopyInviteBtn').addEventListener('click', async ()=>{
+  const input = document.getElementById('settingsInviteLinkInput');
+  if(!input.value) return;
+  input.select();
+  try{
+    await navigator.clipboard.writeText(input.value);
+    const btn = document.getElementById('settingsCopyInviteBtn');
+    btn.textContent = 'コピーしました';
+    setTimeout(()=>{ btn.textContent = 'コピー'; }, 2000);
+  }catch(e){
+    // クリップボードAPIが使えない環境では、選択状態にするので手動コピーしてもらう
+  }
+});
+document.getElementById('settingsPartnerEmail').addEventListener('change', ()=>{
+  DATA.inviteEmail = document.getElementById('settingsPartnerEmail').value.trim();
+  save();
+});
+document.getElementById('sendInviteEmailBtn').addEventListener('click', async ()=>{
+  const emailInput = document.getElementById('settingsPartnerEmail');
+  const email = emailInput.value.trim();
+  if(!email){ alert('パートナーのメールアドレスを入力してください。'); return; }
+  if(email !== (DATA.inviteEmail || '')){ DATA.inviteEmail = email; save(); }
+  const link = document.getElementById('settingsInviteLinkInput').value;
+  if(!link){ alert('招待リンクを取得できませんでした。時間をおいて再度お試しください。'); return; }
+  const introUrl = new URL('intro.html', location.href).href;
+  const subject = '「揉めない家計簿」に招待します';
+  const bodyText = `このリンクを開くだけで、同じ家計に参加できます。\n\n${link}\n\n使い方の紹介ページはこちら：\n${introUrl}`;
+
+  // メールソフトが未設定の環境ではmailtoリンクが無反応になるため、本文をあらかじめコピーしておき、
+  // メールアプリが開かなくても普段使いのメール・LINE等に貼り付けて送れるようにする
+  let copied = false;
+  try{
+    await navigator.clipboard.writeText(`${email} 宛\n件名：${subject}\n\n${bodyText}`);
+    copied = true;
+  }catch(e){}
+
+  location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+
+  showToast(
+    copied
+      ? 'メール文面をコピーしました。メールソフトが開かない場合は、普段お使いのメールやLINE等に貼り付けて送ってください。'
+      : 'メールソフトを起動します。開かない場合は、招待リンクをコピーして直接送ってください。',
+    6000
+  );
+});
+
 document.getElementById('changeMyPinBtn').addEventListener('click', ()=>{
   const u = getCurrentUserRecord();
   if(!u) return;
@@ -4542,6 +4614,7 @@ function refreshAll(){
   renderPartyNamesSettings();
   renderUserManageList();
   renderMyAccount();
+  renderInviteCard();
   renderEntries();
   renderRecentList();
   renderFixed();
