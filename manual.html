@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<!-- APP_META: id=shared-payment-saas-manual; name=揉めない家計簿（使い方マニュアル）; version=v1.0; updated=2026-07-25 -->
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>使い方マニュアル｜揉めない家計簿</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Yusei+Magic&family=Klee+One&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #faf6ef;
+    --paper: #ffffff;
+    --ink: #2e2a24;
+    --sub: #8a8275;
+    --line: #e7ddc9;
+    --a: #2f6f6a;
+    --a-soft: #e3f1ee;
+    --b: #b85c3c;
+    --b-soft: #fbe9e1;
+    --accent: #c79a3a;
+    --shadow: 0 2px 10px rgba(60,50,30,0.07);
+    --radius: 14px;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Hiragino Sans","Yu Gothic",-apple-system,BlinkMacSystemFont,sans-serif;
+    line-height:1.8; -webkit-text-size-adjust:100%;
+  }
+  .wrap{ max-width:680px; margin:0 auto; padding:0 20px 60px; }
+  img{ max-width:100%; height:auto; display:block; }
+
+  header{ padding:30px 0 18px; text-align:center; }
+  h1{
+    font-family:"Yusei Magic",cursive; font-size:clamp(20px,6vw,26px); color:#3f3830;
+    margin:0 0 6px;
+  }
+  .lead{ font-size:13px; color:var(--sub); margin:0; }
+  a.back{ display:inline-block; margin-top:14px; font-size:12px; color:var(--a); text-decoration:none; }
+
+  nav.toc{
+    background:var(--paper); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:14px 18px; margin:18px 0; font-size:13px;
+  }
+  nav.toc p{ margin:0 0 8px; font-weight:700; color:var(--sub); }
+  nav.toc ol{ margin:0; padding-left:1.2em; }
+  nav.toc a{ color:var(--ink); text-decoration:none; }
+  nav.toc a:hover{ text-decoration:underline; }
+
+  section{ margin:26px 0; }
+  .card{
+    background:var(--paper); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:20px; margin-top:12px;
+  }
+  h2{ font-size:17px; margin:0 0 4px; display:flex; align-items:center; gap:8px; }
+  h2 .num{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:24px; height:24px; border-radius:50%; background:var(--a); color:#fff;
+    font-size:12px; flex-shrink:0;
+  }
+  h3{ font-size:14px; margin:16px 0 6px; color:var(--a); }
+  p{ margin:8px 0; font-size:14px; }
+  ol, ul{ padding-left:1.3em; font-size:14px; margin:8px 0; }
+  li{ margin:4px 0; }
+
+  .warn-box{
+    background:var(--b-soft); border-left:4px solid var(--b); border-radius:8px;
+    padding:12px 14px; font-size:13px; margin:12px 0;
+  }
+  .tip-box{
+    background:var(--a-soft); border-left:4px solid var(--a); border-radius:8px;
+    padding:12px 14px; font-size:13px; margin:12px 0;
+  }
+  .steps{ counter-reset:step; list-style:none; padding-left:0; }
+  .steps li{
+    counter-increment:step; position:relative; padding-left:34px; margin:12px 0;
+  }
+  .steps li::before{
+    content:counter(step); position:absolute; left:0; top:0;
+    width:24px; height:24px; border-radius:50%; background:var(--accent); color:#fff;
+    font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center;
+  }
+  code{ background:var(--a-soft); padding:1px 6px; border-radius:5px; font-size:13px; }
+  table{ width:100%; border-collapse:collapse; font-size:13px; margin:10px 0; }
+  th, td{ text-align:left; padding:8px 6px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th{ color:var(--sub); font-weight:700; width:36%; }
+
+  footer{ text-align:center; font-size:12px; color:var(--sub); margin-top:40px; }
+  footer a{ color:var(--a); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>使い方マニュアル</h1>
+  <p class="lead">揉めない家計簿を、迷わず使うためのガイドです</p>
+  <a class="back" href="index.html">← アプリに戻る</a>
+</header>
+
+<nav class="toc">
+  <p>目次</p>
+  <ol>
+    <li><a href="#ios">iPhone（Safari）をお使いの方へ【重要】</a></li>
+    <li><a href="#setup">はじめの設定</a></li>
+    <li><a href="#daily">毎日の使い方</a></li>
+    <li><a href="#trouble">困ったときは</a></li>
+  </ol>
+</nav>
+
+<section id="ios">
+  <h2><span class="num">1</span>iPhone（Safari）をお使いの方へ【重要】</h2>
+  <div class="card">
+    <div class="warn-box">
+      <strong>iPhoneのSafariは、しばらく使わないアプリのデータを自動的に消してしまうことがあります。</strong>
+      家計簿のデータそのものはクラウドに保存されているので消えませんが、端末に一時的に保存している内容（ログイン状態など）が消え、開くたびに読み込み直しが必要になることがあります。
+    </div>
+    <p>これを防ぐには、Safariの「ブックマーク」ではなく、<strong>「ホーム画面に追加」</strong>してアイコンから開くようにしてください。ホーム画面のアイコンから開くと、データが自動削除されにくくなります。</p>
+
+    <h3>ホーム画面に追加する手順</h3>
+    <ol class="steps">
+      <li>iPhoneの<strong>Safari</strong>でこのアプリ（<code>shared-kakeibo-aa995.web.app</code>）を開く</li>
+      <li>画面下（または上）の<strong>共有アイコン</strong>（四角から矢印が上に伸びているマーク）をタップ</li>
+      <li>メニューを下にスクロールして<strong>「ホーム画面に追加」</strong>をタップ</li>
+      <li>右上の<strong>「追加」</strong>をタップして完了</li>
+    </ol>
+    <div class="tip-box">
+      これ以降は、Safariからではなく<strong>ホーム画面に追加されたアイコン</strong>から開いてください。見た目は他のアプリと同じアイコンになります。
+    </div>
+    <p style="font-size:12px; color:var(--sub);">※ Androidやパソコンのブラウザでは、この操作は不要です。</p>
+  </div>
+</section>
+
+<section id="setup">
+  <h2><span class="num">2</span>はじめの設定</h2>
+  <div class="card">
+    <h3>新しくはじめる方</h3>
+    <ol class="steps">
+      <li>アプリを開き、「アカウントをお持ちでない方はこちら（新規登録）」からメールアドレスとパスワードを登録</li>
+      <li>おふたりのお名前を入力</li>
+      <li>ログイン用の<strong>暗証番号（4〜8桁）</strong>を、それぞれ設定</li>
+      <li>「項目設定」タブから招待リンクを発行し、パートナーに送る</li>
+    </ol>
+
+    <h3>招待された方</h3>
+    <p>パートナーから届いた招待リンクを開くだけで、自動的に同じ家計に参加できます。名前と暗証番号を設定すれば準備完了です。</p>
+
+    <h3>アカウントと暗証番号のちがい</h3>
+    <table>
+      <tr><th>アカウント（メール＋パスワード）</th><td>家計そのものへの入り口。ふたりで共有し、最初の登録・招待のときに使う</td></tr>
+      <tr><th>暗証番号（4〜8桁）</th><td>「今どちらが使っているか」を切り替えるための、日々のログインに使う短い番号</td></tr>
+    </table>
+  </div>
+</section>
+
+<section id="daily">
+  <h2><span class="num">3</span>毎日の使い方</h2>
+  <div class="card">
+    <h3>支払いを記録する（「支払い記録」タブ）</h3>
+    <ol class="steps">
+      <li>金額とカテゴリを入力</li>
+      <li>先払いしたのはどちらかを選択（折半で立て替えた場合は「金額を個別に指定する」から調整も可能）</li>
+      <li>精算するときの負担割合をドラッグで調整</li>
+    </ol>
+
+    <h3>毎月の定額（「毎月の定額」タブ）</h3>
+    <p>家賃や通信費など、毎月同じ内容で発生する支払いはここに登録すると、記録の手間が省けます。</p>
+
+    <h3>精算する（「精算」タブ）</h3>
+    <p>期間を指定すると、その間の「先払い額」と「負担額」の差額を自動で計算します。<strong>おふたり両方が確認すると、自動的に「精算完了」</strong>になります。</p>
+  </div>
+</section>
+
+<section id="trouble">
+  <h2><span class="num">4</span>困ったときは</h2>
+  <div class="card">
+    <h3>暗証番号を忘れた</h3>
+    <p>ログイン画面の「暗証番号を忘れた場合はこちら」から、登録メールアドレス宛に確認コードを送って再設定できます。</p>
+
+    <h3>アカウントのパスワードを忘れた</h3>
+    <p>ログイン画面（メールアドレス入力画面）の「パスワードをお忘れの方はこちら」から再設定できます。</p>
+
+    <h3>それでも解決しない場合</h3>
+    <p>お手数ですが <a href="mailto:momenai.kakeibo@gmail.com">momenai.kakeibo@gmail.com</a> までご連絡ください。</p>
+  </div>
+</section>
+
+<footer>
+  揉めない家計簿 ｜ <a href="index.html">アプリに戻る</a> ｜ <a href="intro.html">紹介ページ</a>
+</footer>
+
+</div>
+</body>
+</html>

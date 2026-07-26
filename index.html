@@ -256,7 +256,7 @@
   .month-history{ font-size:11px; color:var(--sub); margin-top:6px; }
   .month-history span{ display:inline-block; margin-right:8px; }
   .modal-overlay{
-    position:fixed; inset:0; background:rgba(30,25,15,0.4); z-index:50;
+    position:fixed; inset:0; background:rgba(30,25,15,0.4); z-index:150;
     display:none; align-items:flex-end; justify-content:center;
   }
   .modal-overlay.open{ display:flex; }
@@ -655,6 +655,7 @@
       </div>
       <p class="small-note" style="margin-top:10px;">アプリの紹介ページ（5コマ漫画つき）も一緒に送ると、パートナーに使い方が伝わりやすくなります。</p>
       <a href="intro.html" target="_blank" rel="noopener" class="btn-secondary" style="display:block; text-align:center; text-decoration:none; margin-bottom:10px;">紹介ページを見る</a>
+      <a href="manual.html" target="_blank" rel="noopener" class="btn-secondary" style="display:block; text-align:center; text-decoration:none; margin-bottom:10px;">使い方マニュアルを見る</a>
       <button type="button" class="btn-primary" id="hh_inviteDoneBtn" style="margin-top:10px;">はじめる</button>
     </div>
     <div id="hh_joiningStep" style="display:none;">
@@ -686,6 +687,7 @@
     <p class="small-note" id="biometricNote" style="display:none; margin-top:8px; text-align:center;"></p>
     <p class="small-note" id="loginHint" style="margin-top:14px; text-align:center;"></p>
     <button type="button" class="link-toggle" id="forgotPinLink" style="display:block; text-align:center; margin-top:6px;">暗証番号を忘れた場合はこちら</button>
+    <button type="button" class="link-toggle" id="loginSignOutBtn" style="display:block; text-align:center; margin-top:6px;">別のアカウントでログインし直す</button>
   </div>
 </div>
 
@@ -1074,6 +1076,12 @@
       <h2>📖 アプリの紹介ページ</h2>
       <p class="small-note">5コマ漫画つきの紹介ページです。パートナーに使い方を説明したいときにも共有できます。</p>
       <a href="intro.html" target="_blank" rel="noopener" class="btn-secondary" style="display:block; text-align:center; text-decoration:none;">紹介ページを開く</a>
+    </div>
+
+    <div class="card">
+      <h2>📘 使い方マニュアル</h2>
+      <p class="small-note">基本の操作方法と、iPhoneをお使いの方への注意点をまとめています。</p>
+      <a href="manual.html" target="_blank" rel="noopener" class="btn-secondary" style="display:block; text-align:center; text-decoration:none;">マニュアルを開く</a>
     </div>
 
     <div class="card">
@@ -2074,6 +2082,13 @@ document.getElementById('accountSubmitBtn').addEventListener('click', async ()=>
 });
 
 document.getElementById('accountSignOutBtn').addEventListener('click', ()=>{
+  firebase.auth().signOut();
+});
+
+// PINログイン画面（＝別の世帯のアカウントが残ったまま）にも同じ避難経路を用意する。
+// これが無いと、以前ログインしたことがある端末で「無料ではじめる」を押した人が、
+// 他人（自分の別世帯）のPIN画面から抜け出せなくなる。
+document.getElementById('loginSignOutBtn').addEventListener('click', ()=>{
   firebase.auth().signOut();
 });
 
