@@ -54,7 +54,9 @@
     <label for="a_password">パスワード</label>
     <input type="password" id="a_password" autocomplete="current-password">
     <button type="button" class="primary" id="a_loginBtn">ログイン</button>
+    <button type="button" id="a_resetBtn" style="margin-top:8px;">パスワードをお忘れの方はこちら</button>
     <div class="msg error" id="a_loginError"></div>
+    <div class="msg ok" id="a_resetMsg"></div>
   </div>
 
   <div class="card hidden" id="formCard">
@@ -104,6 +106,21 @@ document.getElementById('a_loginBtn').addEventListener('click', async ()=>{
     await firebase.auth().signInWithEmailAndPassword(email, password);
   }catch(e){
     errEl.textContent = 'ログインに失敗しました。メールアドレス・パスワードをご確認ください。';
+  }
+});
+
+document.getElementById('a_resetBtn').addEventListener('click', async ()=>{
+  const email = document.getElementById('a_email').value.trim();
+  const errEl = document.getElementById('a_loginError');
+  const resetMsg = document.getElementById('a_resetMsg');
+  errEl.textContent = '';
+  resetMsg.textContent = '';
+  if(!email){ errEl.textContent = 'メールアドレスを入力してください。'; return; }
+  try{
+    await firebase.auth().sendPasswordResetEmail(email);
+    resetMsg.textContent = `${email} に再設定メールを送りました。届いたメール内のリンクから新しいパスワードを設定してください。`;
+  }catch(e){
+    errEl.textContent = '再設定メールの送信に失敗しました。メールアドレスをご確認ください。';
   }
 });
 
