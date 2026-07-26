@@ -146,7 +146,7 @@ exports.dailyBackup = onSchedule(
 /* ===================== アップデート連絡（管理者専用・admin.htmlから利用） ===================== */
 // アプリ開発者本人のFirebase Auth UID。管理者向け機能はこのUIDでのみ許可する
 // （世帯ごとの「管理者」役割＝家計の作成者とは別物。こちらはアプリ全体の運営者チェック）
-const ADMIN_UID = "qr5qIOJwDagknvGrg1Pnvt9RPHN2"; // yujismz@gmail.com
+const ADMIN_UID = "bBz3i9ugyBeT9mYJ2fnvLIvzWqm2"; // momenai.kakeibo@gmail.com
 
 // 送信元アドレスは秘密情報ではないので直接記載（パスワード再設定メールと同じ送信元）
 const GMAIL_USER = "momenai.kakeibo@gmail.com";
