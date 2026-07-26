@@ -70,6 +70,8 @@
 
   <div class="card hidden" id="deniedCard">
     <p class="msg error">この操作を行う権限がありません。</p>
+    <p class="msg" id="deniedInfo"></p>
+    <button type="button" id="a_logoutBtn">ログアウト</button>
   </div>
 </div>
 
@@ -162,6 +164,8 @@ document.getElementById('a_sendBtn').addEventListener('click', async ()=>{
   }
 });
 
+document.getElementById('a_logoutBtn').addEventListener('click', ()=> firebase.auth().signOut());
+
 firebase.auth().onAuthStateChanged(user=>{
   loginCard.classList.add('hidden');
   formCard.classList.add('hidden');
@@ -170,6 +174,8 @@ firebase.auth().onAuthStateChanged(user=>{
     loginCard.classList.remove('hidden');
   }else if(user.uid !== ADMIN_UID){
     deniedCard.classList.remove('hidden');
+    document.getElementById('deniedInfo').textContent =
+      `ログイン中：${user.email}（UID: ${user.uid}）`;
   }else{
     formCard.classList.remove('hidden');
   }
