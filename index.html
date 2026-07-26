@@ -810,7 +810,7 @@
 
         <div class="field">
           <label>項目名</label>
-          <input type="text" id="f_item" list="itemList" placeholder="例：通学定期券" required>
+          <input type="text" id="f_item" list="itemList" autocomplete="off" placeholder="例：通学定期券" required>
           <datalist id="itemList"></datalist>
         </div>
 
@@ -1146,6 +1146,15 @@
         <button type="button" id="addPersonBtn">追加</button>
       </div>
     </div>
+    <div class="card" id="itemManageCard">
+      <h2>項目名の候補管理</h2>
+      <p class="small-note">「新しい支払いを記録」の項目名欄で表示される候補の一覧です。使わなくなったものはここで削除できます。</p>
+      <div class="chip-row" id="itemChips"></div>
+      <div class="add-toggle" style="margin-top:12px;">
+        <input type="text" id="newItem" placeholder="新しい項目名">
+        <button type="button" id="addItemBtn">追加</button>
+      </div>
+    </div>
     <div class="card">
       <h2>データの保存について</h2>
       <p class="small-note">入力するたびに、まずこの端末へ自動で保存されます。電波が繋がっていればそのままクラウドにも自動で同期され、ふたりの端末で共有されます。電波が不安定なときも記録が消えることはなく、繋がり次第、自動で追いつきます。<strong>ふだんの操作は必要ありません。</strong>同期状況はヘッダーの表示（同期済み／未同期）でいつでも確認できます。</p>
@@ -1186,7 +1195,7 @@
       </div>
       <div class="field">
         <label>項目名</label>
-        <input type="text" id="e_item" list="itemList" required>
+        <input type="text" id="e_item" list="itemList" autocomplete="off" required>
       </div>
       <div class="field">
         <label>① 総計金額</label>
@@ -2729,20 +2738,30 @@ tabButtons.forEach(btn=>{
 });
 
 /* ===================== SELECT POPULATION ===================== */
-function populateSelect(sel, list, withAddOption){
+const ADD_OPTION_VALUE = '__add__';
+function populateSelect(sel, list, addLabel){
+  const prev = sel.value;
   sel.innerHTML = '';
   list.forEach(v=>{
     const opt = document.createElement('option');
     opt.value = v; opt.textContent = v;
     sel.appendChild(opt);
   });
+  if(addLabel){
+    const opt = document.createElement('option');
+    opt.value = ADD_OPTION_VALUE; opt.textContent = '＋ ' + addLabel;
+    sel.appendChild(opt);
+  }
+  // 選び直した後の再描画で、選択中の値を保てるものは保つ（無ければ先頭に戻る）
+  if(list.includes(prev)) sel.value = prev;
 }
 
+const ITEM_ADD_OPTION_LABEL = '＋ 項目を追加';
 function refreshDropdowns(){
-  populateSelect(document.getElementById('f_category'), DATA.categories);
-  populateSelect(document.getElementById('e_category'), DATA.categories);
-  populateSelect(document.getElementById('f_person'), DATA.persons);
-  populateSelect(document.getElementById('e_person'), DATA.persons);
+  populateSelect(document.getElementById('f_category'), DATA.categories, '新しいカテゴリを追加');
+  populateSelect(document.getElementById('e_category'), DATA.categories, '新しいカテゴリを追加');
+  populateSelect(document.getElementById('f_person'), DATA.persons, '新しい対象者を追加');
+  populateSelect(document.getElementById('e_person'), DATA.persons, '新しい対象者を追加');
   const dl = document.getElementById('itemList');
   dl.innerHTML='';
   DATA.items.forEach(v=>{
@@ -2750,7 +2769,105 @@ function refreshDropdowns(){
     opt.value = v;
     dl.appendChild(opt);
   });
+  // 項目名は自由入力のdatalistなので、選択肢そのものにボタンは置けない。
+  // 候補の最下段に案内用の値を1件足しておき、これが選ばれたら設定画面へ誘導する。
+  const addOpt = document.createElement('option');
+  addOpt.value = ITEM_ADD_OPTION_LABEL;
+  dl.appendChild(addOpt);
 }
+
+// 項目名欄で「＋ 項目を追加」が選ばれたら、入力を空に戻して
+// 項目設定タブの「項目名の候補管理」まで連れて行く。
+function handleItemAddNavigate(input){
+  if(input.value !== ITEM_ADD_OPTION_LABEL) return;
+  input.value = '';
+  // 編集モーダル（記録を編集）の中から選んだ場合、モーダルが最前面のままだと
+  // 裏で切り替えた設定タブが見えないので、先に閉じる
+  if(input.id === 'e_item'){
+    const overlay = document.getElementById('editModalOverlay');
+    if(overlay) overlay.classList.remove('open');
+  }
+  const settingsTabBtn = document.querySelector('nav.tabs button[data-tab="settings"]');
+  if(settingsTabBtn) settingsTabBtn.click();
+  const card = document.getElementById('itemManageCard');
+  if(card){
+    card.classList.remove('collapsed');
+    card.scrollIntoView({behavior:'smooth', block:'start'});
+    const newItemInput = document.getElementById('newItem');
+    if(newItemInput) newItemInput.focus();
+  }
+}
+['f_item','e_item'].forEach(id=>{
+  const input = document.getElementById(id);
+  input.addEventListener('input', ()=> handleItemAddNavigate(input));
+});
+
+function addItemValue(v){
+  v = (v||'').trim();
+  if(!v) return false;
+  if(!DATA.items.includes(v)) DATA.items.push(v);
+  save(); refreshDropdowns(); renderSettingsChips();
+  return true;
+}
+function addItemFromInput(inputId){
+  const input = document.getElementById(inputId);
+  if(addItemValue(input.value)) input.value='';
+}
+document.getElementById('addItemBtn').addEventListener('click', ()=> addItemFromInput('newItem'));
+
+function addCategoryValue(v){
+  v = (v||'').trim();
+  if(!v) return false;
+  if(!DATA.categories.includes(v)) DATA.categories.push(v);
+  if(!DATA.categoryRatios) DATA.categoryRatios = {};
+  if(!(v in DATA.categoryRatios)) DATA.categoryRatios[v] = 50;
+  save(); refreshDropdowns(); renderSettingsChips(); renderCategoryRatios();
+  return true;
+}
+function addPersonValue(v){
+  v = (v||'').trim();
+  if(!v) return false;
+  if(!DATA.persons.includes(v)) DATA.persons.push(v);
+  save(); refreshDropdowns(); renderSettingsChips();
+  return true;
+}
+
+// カテゴリ・対象者のプルダウン最下段「＋ 新しい○○を追加」を選んだときの共通処理。
+// その場で名前を聞いて追加し、選択中のプルダウンにもすぐ反映する
+// （設定タブへ移動すると、入力中の他の項目が失われてしまうため）。
+function handleAddOptionChange(sel, kind){
+  if(sel.value !== ADD_OPTION_VALUE){
+    sel.dataset.prevValue = sel.value;
+    return;
+  }
+  const label = kind==='category' ? 'カテゴリ' : '対象者';
+  const name = window.prompt('新しい' + label + '名を入力してください');
+  const trimmed = (name||'').trim();
+  let finalValue = sel.dataset.prevValue;
+  if(!finalValue || finalValue===ADD_OPTION_VALUE){
+    // 追加を選ぶ前の値が拾えなかった場合（初回表示直後など）は先頭の項目に逃がす
+    const firstReal = Array.from(sel.options).find(o=>o.value!==ADD_OPTION_VALUE);
+    finalValue = firstReal ? firstReal.value : '';
+  }
+  if(trimmed){
+    if(kind==='category') addCategoryValue(trimmed); else addPersonValue(trimmed);
+    finalValue = trimmed;
+  }
+  sel.value = finalValue;
+  sel.dataset.prevValue = finalValue;
+  // refreshDropdowns()後に確定した値を選び直したので、割合ヒントなど他のリスナーにも伝える
+  sel.dispatchEvent(new Event('change'));
+}
+['f_category','e_category'].forEach(id=>{
+  const sel = document.getElementById(id);
+  sel.dataset.prevValue = sel.value;
+  sel.addEventListener('change', ()=> handleAddOptionChange(sel, 'category'));
+});
+['f_person','e_person'].forEach(id=>{
+  const sel = document.getElementById(id);
+  sel.dataset.prevValue = sel.value;
+  sel.addEventListener('change', ()=> handleAddOptionChange(sel, 'person'));
+});
 
 function rememberItem(name){
   if(name && !DATA.items.includes(name)){
@@ -3028,9 +3145,11 @@ function syncFBarFromFields(){
 });
 
 document.getElementById('f_category').addEventListener('change', ()=>{
+  const catSel = document.getElementById('f_category');
+  if(catSel.value === ADD_OPTION_VALUE) return;
   const hint = document.getElementById('f_ratio_hint');
-  const pct = getCategoryRatio(document.getElementById('f_category').value);
-  hint.textContent = `「${document.getElementById('f_category').value}」のデフォルト割合：${nameA()}${pct}% ／ ${nameB()}${100-pct}%（「カテゴリの規定割合」ボタンで反映できます）`;
+  const pct = getCategoryRatio(catSel.value);
+  hint.textContent = `「${catSel.value}」のデフォルト割合：${nameA()}${pct}% ／ ${nameB()}${100-pct}%（「カテゴリの規定割合」ボタンで反映できます）`;
 });
 
 document.querySelectorAll('[data-split]').forEach(btn=>{
@@ -4305,6 +4424,12 @@ function renderSettingsChips(){
   };
   renderChipsInto('personChips', DATA.persons, 'del-per', onDeletePer);
   renderChipsInto('hh_personChips', DATA.persons, 'del-per', onDeletePer);
+  const onDeleteItem = it=>{
+    markDeleted('items', it);
+    DATA.items = DATA.items.filter(x=>x!==it);
+    save(); refreshDropdowns(); renderSettingsChips();
+  };
+  renderChipsInto('itemChips', DATA.items, 'del-item', onDeleteItem);
 }
 
 function renderCategoryRatios(){
@@ -4339,21 +4464,11 @@ function renderCategoryRatios(){
 
 function addCategoryFromInput(inputId){
   const input = document.getElementById(inputId);
-  const v = input.value.trim();
-  if(!v) return;
-  if(!DATA.categories.includes(v)) DATA.categories.push(v);
-  if(!DATA.categoryRatios) DATA.categoryRatios = {};
-  if(!(v in DATA.categoryRatios)) DATA.categoryRatios[v] = 50;
-  input.value='';
-  save(); refreshDropdowns(); renderSettingsChips(); renderCategoryRatios();
+  if(addCategoryValue(input.value)) input.value='';
 }
 function addPersonFromInput(inputId){
   const input = document.getElementById(inputId);
-  const v = input.value.trim();
-  if(!v) return;
-  if(!DATA.persons.includes(v)) DATA.persons.push(v);
-  input.value='';
-  save(); refreshDropdowns(); renderSettingsChips();
+  if(addPersonValue(input.value)) input.value='';
 }
 document.getElementById('addCategoryBtn').addEventListener('click', ()=> addCategoryFromInput('newCategory'));
 document.getElementById('addPersonBtn').addEventListener('click', ()=> addPersonFromInput('newPerson'));
