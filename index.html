@@ -268,6 +268,12 @@
   @keyframes slideup{ from{transform:translateY(20px); opacity:0;} to{transform:translateY(0); opacity:1;} }
   .modal h3{ margin:0 0 14px; font-size:15px; }
   .small-note{ font-size:11px; color:var(--sub); margin-top:-4px; margin-bottom:10px; line-height:1.5;}
+  .setup-tip{
+    margin-top:10px; margin-bottom:10px; padding:10px 12px; border-radius:10px;
+    background:rgba(199,154,58,0.12); border:1px solid rgba(199,154,58,0.4);
+    font-size:12px; line-height:1.6; color:var(--ink);
+  }
+  .setup-tip a{ color:var(--a-dark); }
   .delete-link{ color:var(--danger); font-size:12px; background:none; border:none; padding:4px; }
   .settle-list .entry .item-name{ font-weight:600; }
   .chip-row{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
@@ -656,10 +662,16 @@
       <p class="small-note" style="margin-top:10px;">アプリの紹介ページ（5コマ漫画つき）も一緒に送ると、パートナーに使い方が伝わりやすくなります。</p>
       <a href="intro.html" target="_blank" rel="noopener" class="btn-secondary" style="display:block; text-align:center; text-decoration:none; margin-bottom:10px;">紹介ページを見る</a>
       <a href="manual.html" target="_blank" rel="noopener" class="btn-secondary" style="display:block; text-align:center; text-decoration:none; margin-bottom:10px;">使い方マニュアルを見る</a>
+      <div class="setup-tip">
+        <strong>iPhoneをお使いの方へ：</strong>「はじめる」を押したら、画面下（または上）の共有アイコン「↑」をタップし、「ホーム画面に追加」しておいてください。ホーム画面のアイコンから開くようにすると、データが自動削除されにくくなります（<a href="manual.html#ios" target="_blank" rel="noopener">詳しい手順</a>）。
+      </div>
       <button type="button" class="btn-primary" id="hh_inviteDoneBtn" style="margin-top:10px;">はじめる</button>
     </div>
     <div id="hh_joiningStep" style="display:none;">
       <p class="small-note">招待された家計に参加しています…</p>
+      <div class="setup-tip">
+        <strong>iPhoneをお使いの方へ：</strong>この後、画面下（または上）の共有アイコン「↑」をタップし、「ホーム画面に追加」しておいてください。ホーム画面のアイコンから開くようにすると、データが自動削除されにくくなります（<a href="manual.html#ios" target="_blank" rel="noopener">詳しい手順</a>）。
+      </div>
     </div>
     <div class="login-error" id="hh_error"></div>
     <button type="button" class="link-toggle" id="accountSignOutBtn" style="display:block; text-align:center; margin-top:14px;">別のアカウントでログインし直す</button>
