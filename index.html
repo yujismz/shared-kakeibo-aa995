@@ -1112,7 +1112,7 @@
       <a href="manual.html" target="_blank" rel="noopener" class="btn-secondary" style="display:block; text-align:center; text-decoration:none;">マニュアルを開く</a>
     </div>
 
-    <div class="card">
+    <div class="card" id="premiumCard">
       <h2>プレミアムプラン</h2>
       <p class="small-note" id="premiumStatusText">現在のプランを確認しています…</p>
       <div id="premiumUpgradeButtons" style="display:none;">
@@ -2667,27 +2667,30 @@ function showToast(html, durationMs){
 }
 
 /* ===================== 更新通知（共同利用者にメールで知らせる：プレミアム限定） ===================== */
-let upgradeNudgeShownThisSession = false;
+function openPremiumCard(){
+  const settingsTabBtn = document.querySelector('nav.tabs button[data-tab="settings"]');
+  if(settingsTabBtn) settingsTabBtn.click();
+  const card = document.getElementById('premiumCard');
+  if(card){
+    card.classList.remove('collapsed');
+    card.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+}
 
 async function promptNotifyUsers(subject, message){
+  if(!isPremium){
+    // 無料プランでは送信しないが、記録するたびに毎回アップグレード導線を出す
+    showToast(
+      `プレミアムプラン加入により記録通知メールを相手に自動送信できます　<button type="button" class="toast-action" id="toastUpgradeLink">プレミアムに登録</button>`,
+      6000
+    );
+    const link = document.getElementById('toastUpgradeLink');
+    if(link) link.addEventListener('click', openPremiumCard);
+    return;
+  }
+
   const candidates = DATA.users.filter(u=> u.id!==currentUserId && u.email);
   if(candidates.length === 0) return; // 通知できる相手がいない
-
-  if(!isPremium){
-    if(!upgradeNudgeShownThisSession){
-      upgradeNudgeShownThisSession = true;
-      showToast(
-        `プレミアムなら相手に自動でメール通知できます　<button type="button" class="toast-action" id="toastUpgradeLink">詳しく見る</button>`,
-        6000
-      );
-      const link = document.getElementById('toastUpgradeLink');
-      if(link) link.addEventListener('click', ()=>{
-        const settingsTabBtn = document.querySelector('nav.tabs button[data-tab="settings"]');
-        if(settingsTabBtn) settingsTabBtn.click();
-      });
-    }
-    return; // 無料プランは送信しない
-  }
 
   if(!emailjsReady){
     console.warn('premiumだがEmailJSが未設定のため通知メールを送信できません');

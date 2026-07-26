@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<!-- APP_META: id=shared-payment-saas-admin; name=揉めない家計簿（管理者用アップデート連絡）; version=v1.0; updated=2026-07-26 -->
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>管理者用：アップデート連絡</title>
+<style>
+  :root{
+    --bg:#f6f1e7; --card:#fffdf8; --line:#e4dcc8; --ink:#3a3226; --sub:#8a7f6a;
+    --accent:#8a5a2b; --danger:#c0392b;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; padding:24px 16px 60px; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Hiragino Sans,Meiryo,sans-serif;
+  }
+  .wrap{max-width:520px; margin:0 auto;}
+  h1{font-size:18px; margin:0 0 4px;}
+  .sub{font-size:13px; color:var(--sub); margin-bottom:20px;}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:20px; margin-bottom:16px;
+  }
+  label{display:block; font-size:13px; color:var(--sub); margin-bottom:4px;}
+  input[type=email], input[type=password], input[type=text], textarea{
+    width:100%; padding:10px; border:1px solid var(--line); border-radius:8px;
+    font-size:14px; margin-bottom:14px; background:#fff; color:var(--ink); font-family:inherit;
+  }
+  textarea{min-height:180px; resize:vertical;}
+  button{
+    width:100%; padding:12px; border-radius:8px; border:1px solid var(--line);
+    font-size:14px; font-weight:600; cursor:pointer; background:#fff; color:var(--ink);
+  }
+  button.primary{background:var(--accent); color:#fff; border-color:var(--accent);}
+  button.danger{background:var(--danger); color:#fff; border-color:var(--danger);}
+  button:disabled{opacity:.5; cursor:not-allowed;}
+  .msg{font-size:13px; margin-top:10px; line-height:1.6; white-space:pre-wrap;}
+  .msg.error{color:var(--danger);}
+  .msg.ok{color:#2c6e3f;}
+  .hidden{display:none;}
+  .count{font-size:13px; color:var(--sub); margin-bottom:10px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>揉めない家計簿：アップデート連絡（管理者専用）</h1>
+  <p class="sub">登録済みの全ユーザーへ、アップデート連絡メールを一斉送信します。</p>
+
+  <div class="card" id="loginCard">
+    <label for="a_email">メールアドレス</label>
+    <input type="email" id="a_email" autocomplete="email">
+    <label for="a_password">パスワード</label>
+    <input type="password" id="a_password" autocomplete="current-password">
+    <button type="button" class="primary" id="a_loginBtn">ログイン</button>
+    <div class="msg error" id="a_loginError"></div>
+  </div>
+
+  <div class="card hidden" id="formCard">
+    <label for="a_subject">件名</label>
+    <input type="text" id="a_subject" placeholder="【揉めない家計簿】お知らせ">
+    <label for="a_body">本文</label>
+    <textarea id="a_body" placeholder="いつも「揉めない家計簿」をご利用いただきありがとうございます。"></textarea>
+    <div class="count" id="a_count"></div>
+    <button type="button" id="a_previewBtn">送信対象人数を確認</button>
+    <button type="button" class="danger" id="a_sendBtn" style="margin-top:10px;" disabled>一斉送信する</button>
+    <div class="msg" id="a_sendMsg"></div>
+  </div>
+
+  <div class="card hidden" id="deniedCard">
+    <p class="msg error">この操作を行う権限がありません。</p>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
+<script>
+const ADMIN_UID = "Zk8r4AwejqUJX3UcuAK6wZEJbCm2";
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCuFIqj6cIjhm9yvBZF3pBd4neDyMdMr64",
+  authDomain: "shared-kakeibo-aa995.firebaseapp.com",
+  databaseURL: "https://shared-kakeibo-aa995-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "shared-kakeibo-aa995",
+  storageBucket: "shared-kakeibo-aa995.firebasestorage.app",
+  messagingSenderId: "213836738589",
+  appId: "1:213836738589:web:163d7e7e478306bf57d6f4",
+};
+firebase.initializeApp(FIREBASE_CONFIG);
+
+const loginCard = document.getElementById('loginCard');
+const formCard = document.getElementById('formCard');
+const deniedCard = document.getElementById('deniedCard');
+
+document.getElementById('a_loginBtn').addEventListener('click', async ()=>{
+  const email = document.getElementById('a_email').value.trim();
+  const password = document.getElementById('a_password').value;
+  const errEl = document.getElementById('a_loginError');
+  errEl.textContent = '';
+  try{
+    await firebase.auth().signInWithEmailAndPassword(email, password);
+  }catch(e){
+    errEl.textContent = 'ログインに失敗しました。メールアドレス・パスワードをご確認ください。';
+  }
+});
+
+let previewedCount = null;
+
+document.getElementById('a_previewBtn').addEventListener('click', async ()=>{
+  const countEl = document.getElementById('a_count');
+  const sendBtn = document.getElementById('a_sendBtn');
+  countEl.textContent = '確認中…';
+  sendBtn.disabled = true;
+  previewedCount = null;
+  try{
+    const fn = firebase.functions().httpsCallable('previewAnnouncementRecipients');
+    const res = await fn();
+    previewedCount = res.data.count;
+    countEl.textContent = `送信対象：${previewedCount}件`;
+    sendBtn.disabled = previewedCount === 0;
+  }catch(e){
+    console.error(e);
+    countEl.textContent = '対象人数の確認に失敗しました。';
+  }
+});
+
+document.getElementById('a_sendBtn').addEventListener('click', async ()=>{
+  const subject = document.getElementById('a_subject').value.trim();
+  const body = document.getElementById('a_body').value.trim();
+  const msgEl = document.getElementById('a_sendMsg');
+  const sendBtn = document.getElementById('a_sendBtn');
+  msgEl.className = 'msg';
+  msgEl.textContent = '';
+
+  if(!subject || !body){
+    msgEl.className = 'msg error';
+    msgEl.textContent = '件名と本文を入力してください。';
+    return;
+  }
+  if(previewedCount === null){
+    msgEl.className = 'msg error';
+    msgEl.textContent = '先に「送信対象人数を確認」を押してください。';
+    return;
+  }
+  const ok = confirm(`${previewedCount}件のユーザーへ、以下の内容で一斉送信します。よろしいですか？\n\n件名：${subject}\n\n本文：\n${body}`);
+  if(!ok) return;
+
+  sendBtn.disabled = true;
+  msgEl.textContent = '送信中…（人数が多いと時間がかかります）';
+  try{
+    const fn = firebase.functions().httpsCallable('sendUpdateAnnouncement');
+    const res = await fn({ subject, body });
+    msgEl.className = 'msg ok';
+    msgEl.textContent = `送信完了：${res.data.sent}/${res.data.total}件成功（失敗：${res.data.failed}件）`;
+  }catch(e){
+    console.error(e);
+    msgEl.className = 'msg error';
+    msgEl.textContent = '送信に失敗しました。時間をおいて再度お試しください。';
+  }finally{
+    sendBtn.disabled = false;
+  }
+});
+
+firebase.auth().onAuthStateChanged(user=>{
+  loginCard.classList.add('hidden');
+  formCard.classList.add('hidden');
+  deniedCard.classList.add('hidden');
+  if(!user){
+    loginCard.classList.remove('hidden');
+  }else if(user.uid !== ADMIN_UID){
+    deniedCard.classList.remove('hidden');
+  }else{
+    formCard.classList.remove('hidden');
+  }
+});
+</script>
+</body>
+</html>

@@ -1,9 +1,11 @@
 const { setGlobalOptions } = require("firebase-functions");
 const { onCall, onRequest, HttpsError } = require("firebase-functions/https");
+const { onSchedule } = require("firebase-functions/scheduler");
 const { defineSecret } = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
 const Stripe = require("stripe");
+const nodemailer = require("nodemailer");
 
 admin.initializeApp();
 setGlobalOptions({ maxInstances: 10 });
@@ -111,5 +113,112 @@ exports.stripeWebhook = onRequest(
       logger.error("Webhook handling error", err);
       res.status(500).send("internal error");
     }
+  }
+);
+
+const BACKUP_RETENTION_DAYS = 30;
+
+// Realtime Database全体を毎日Cloud Storageへバックアップし、古いものは自動削除する
+exports.dailyBackup = onSchedule(
+  { schedule: "every day 04:00", timeZone: "Asia/Tokyo" },
+  async () => {
+    const snapshot = await admin.database().ref("/").once("value");
+    const json = JSON.stringify(snapshot.val());
+    const dateKey = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Tokyo" }); // YYYY-MM-DD（JST基準）
+
+    const bucket = admin.storage().bucket();
+    const file = bucket.file(`backups/${dateKey}.json`);
+    await file.save(json, { contentType: "application/json" });
+    logger.info(`Backup saved: backups/${dateKey}.json (${json.length} bytes)`);
+
+    const cutoff = Date.now() - BACKUP_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+    const [files] = await bucket.getFiles({ prefix: "backups/" });
+    for (const f of files) {
+      const [meta] = await f.getMetadata();
+      if (new Date(meta.timeCreated).getTime() < cutoff) {
+        await f.delete();
+        logger.info(`Deleted old backup: ${f.name}`);
+      }
+    }
+  }
+);
+
+/* ===================== アップデート連絡（管理者専用・admin.htmlから利用） ===================== */
+// アプリ開発者本人のFirebase Auth UID。管理者向け機能はこのUIDでのみ許可する
+// （世帯ごとの「管理者」役割＝家計の作成者とは別物。こちらはアプリ全体の運営者チェック）
+const ADMIN_UID = "Zk8r4AwejqUJX3UcuAK6wZEJbCm2";
+
+// 送信元アドレスは秘密情報ではないので直接記載（パスワード再設定メールと同じ送信元）
+const GMAIL_USER = "momenai.kakeibo@gmail.com";
+const GMAIL_APP_PASSWORD = defineSecret("GMAIL_APP_PASSWORD");
+
+function requireAdmin(request) {
+  if (!request.auth || request.auth.uid !== ADMIN_UID) {
+    throw new HttpsError("permission-denied", "この操作を行う権限がありません。");
+  }
+}
+
+// 全世帯・全ユーザーのメールアドレスを、重複を除いて集める
+async function collectAnnouncementRecipients() {
+  const snapshot = await admin.database().ref("households").once("value");
+  const households = snapshot.val() || {};
+  const recipients = new Map(); // メールアドレス（小文字）-> 表示名
+  Object.values(households).forEach((h) => {
+    const users = (h && h.data && h.data.users) || [];
+    users.forEach((u) => {
+      if (u && u.email) {
+        const key = String(u.email).trim().toLowerCase();
+        if (key && !recipients.has(key)) recipients.set(key, u.name || "");
+      }
+    });
+  });
+  return recipients;
+}
+
+// 送信前に対象人数だけを確認するための下見用エンドポイント（実際には送信しない）
+exports.previewAnnouncementRecipients = onCall(async (request) => {
+  requireAdmin(request);
+  const recipients = await collectAnnouncementRecipients();
+  return { count: recipients.size };
+});
+
+// 全ユーザーへアップデート連絡メールを一斉送信する（Gmail SMTPリレー使用）
+exports.sendUpdateAnnouncement = onCall(
+  { secrets: [GMAIL_APP_PASSWORD] },
+  async (request) => {
+    requireAdmin(request);
+    const subject = (request.data && String(request.data.subject || "").trim()) || "";
+    const body = (request.data && String(request.data.body || "").trim()) || "";
+    if (!subject || !body) {
+      throw new HttpsError("invalid-argument", "件名と本文を入力してください。");
+    }
+
+    const recipients = await collectAnnouncementRecipients();
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD.value() },
+    });
+
+    let sent = 0;
+    let failed = 0;
+    for (const [email, name] of recipients) {
+      try {
+        await transporter.sendMail({
+          from: `"揉めない家計簿" <${GMAIL_USER}>`,
+          to: email,
+          subject,
+          text:
+            (name ? name + "様\n\n" : "") +
+            body +
+            "\n\n---\nこのメールは「揉めない家計簿」にご登録いただいた方にお送りしています。",
+        });
+        sent++;
+      } catch (e) {
+        logger.error("announcement send error", email, e);
+        failed++;
+      }
+    }
+    logger.info(`Announcement sent: ${sent}/${recipients.size} (failed: ${failed})`);
+    return { total: recipients.size, sent, failed };
   }
 );
