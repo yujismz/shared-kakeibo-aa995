@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_META: id=shared-payment-saas; name=揉めない家計簿（販売版）; version=v1.10; updated=2026-08-09 -->
+<!-- APP_META: id=shared-payment-saas; name=揉めない家計簿（販売版）; version=v1.11; updated=2026-09-17 -->
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -987,6 +987,7 @@
           <div class="box m"><div class="v" id="sp_burdenB">¥0</div><div class="p" id="sp_burdenBPct" data-tmpl="負担：{b}"></div></div>
         </div>
         <div class="diff-note" id="sp_diff_note" style="margin-top:10px;">差額なし</div>
+        <div class="small-note" id="sp_extra_note" style="display:none; margin-top:4px;"></div>
         <button type="button" class="btn-primary" id="requestSettlePeriodBtn" style="background:var(--danger); margin-top:6px;">この内容で精算完了を申請する</button>
       </div>
     </div>
@@ -1348,6 +1349,12 @@
         <button type="button" data-xsplit="b100" data-tmpl="{b}が全額負担"></button>
         <button type="button" data-xsplit="half">半分ずつ</button>
       </div>
+      <div class="small-note" style="margin-top:14px;">ふだん先払いしている（口座引き落とし等の）のはどちら？</div>
+      <div class="role-toggle" id="x_paid_toggle">
+        <button type="button" data-paidwho="a" data-tmpl="{a}が先払い"></button>
+        <button type="button" data-paidwho="b" data-tmpl="{b}が先払い"></button>
+      </div>
+      <p class="small-note" style="margin-top:-8px;">毎月の発生時にこの人が先払いした扱いになります（発生月ごとに個別変更も可能）</p>
       <div class="field" style="margin-top:12px;">
         <label>支払日（毎月何日 / 任意）</label>
         <input type="number" id="x_payday" min="1" max="31" placeholder="例：27">
@@ -1519,8 +1526,16 @@ function computeBalancePeriod(months){
     if(months&&months.length&&months.indexOf(monthKey(e.date))<0) return;
     bal+=(e.b||0)-(e.paidB||0);
   });
-  (DATA.fixedPayments||[]).forEach(function(p){ if(p.status==='paid') bal+=(p.b||0); });
-  (DATA.settlements||[]).forEach(function(s){ if(s.direction==='b_to_a') bal-=s.amount; else bal+=s.amount; });
+  (DATA.fixedPayments||[]).forEach(function(p){
+    if(p.status!=='paid'||p.settled) return;
+    if(months&&months.length&&months.indexOf(p.yearMonth)<0) return;
+    bal+=(p.b||0)-(p.paidB||0);
+  });
+  (DATA.settlements||[]).forEach(function(s){
+    if(s.reflected) return;
+    if(months&&months.length&&months.indexOf(monthKey(s.date))<0) return;
+    if(s.direction==='b_to_a') bal-=s.amount; else bal+=s.amount;
+  });
   return bal;
 }
 (function(){
@@ -1557,6 +1572,8 @@ document.addEventListener('DOMContentLoaded',function(){
     if(allOk){
       p.status='completed'; p.completedAt=Date.now();
       (p.entryIds||[]).forEach(function(id){ var e=DATA.entries.find(function(x){return x.id===id;}); if(e) e.settled=true; });
+      (p.fixedIds||[]).forEach(function(id){ var fp=DATA.fixedPayments.find(function(x){return x.id===id;}); if(fp) fp.settled=true; });
+      (p.settlementIds||[]).forEach(function(id){ var s=DATA.settlements.find(function(x){return x.id===id;}); if(s) s.reflected=true; });
       save(); alert('精算が完了しました！');
     } else { save(); alert('確認を記録しました。もう一方のユーザーの確認をお待ちください。'); }
     renderSettlePeriod();
@@ -2952,9 +2969,11 @@ function computeBalance(){
     bal += (e.b||0) - paidB;
   });
   DATA.fixedPayments.forEach(p=>{
-    if(p.status==='paid'){ bal += (p.b||0); }
+    if(p.status!=='paid' || p.settled) return;
+    bal += (p.b||0) - (p.paidB||0);
   });
   DATA.settlements.forEach(s=>{
+    if(s.reflected) return;
     if(s.direction==='b_to_a') bal -= s.amount;
     else bal += s.amount;
   });
@@ -3679,20 +3698,19 @@ function renderSummary(){
     strip.classList.remove('zero');
   }
 
-  // 肩代わり額（実際に支払った額）と負担額の差額合計＝精算が必要な金額（精算完了済みは除外）
-  const payDiff = unsettledOnly.reduce((s,e)=>{
-    const paidB = e.paidB != null ? e.paidB : 0;
-    return s + ((e.b||0) - paidB);
-  }, 0);
+  // 肩代わり額（実際に支払った額）と負担額の差額合計＝精算が必要な金額。
+  // サマリー期間の絞り込みに関係なく、記録がある全期間・毎月の定額・精算履歴を
+  // すべて含めた「今すぐ精算するといくらか」を表示する（=balanceBannerと同じcomputeBalance()）。
+  const payDiff = computeBalance();
   const diffStrip = document.getElementById('diffStrip');
   if(Math.abs(payDiff) < 1){
-    diffStrip.textContent = '肩代わり額との差額合計：¥0（立て替えと負担額が一致しています）';
+    diffStrip.textContent = '肩代わり額との差額合計（全期間）：¥0（立て替えと負担額が一致しています）';
     diffStrip.classList.add('zero');
   } else if(payDiff > 0){
-    diffStrip.textContent = `肩代わり額との差額合計：${nameB()} → ${nameA()}　${yen(payDiff)}`;
+    diffStrip.textContent = `肩代わり額との差額合計（全期間）：${nameB()} → ${nameA()}　${yen(payDiff)}`;
     diffStrip.classList.remove('zero');
   } else {
-    diffStrip.textContent = `肩代わり額との差額合計：${nameA()} → ${nameB()}　${yen(Math.abs(payDiff))}`;
+    diffStrip.textContent = `肩代わり額との差額合計（全期間）：${nameA()} → ${nameB()}　${yen(Math.abs(payDiff))}`;
     diffStrip.classList.remove('zero');
   }
 
@@ -3804,12 +3822,26 @@ document.querySelectorAll('[data-xsplit]').forEach(btn=>{
 });
 autoSplit(document.getElementById('x_amount'), document.getElementById('x_a'), document.getElementById('x_b'));
 
+/* ---- 定額費用テンプレートの「ふだん先払いしているのはどちら？」トグル ---- */
+let xPaidWho = 'a';
+function updateXPaidToggleUI(){
+  document.querySelectorAll('#x_paid_toggle button').forEach(b=>{
+    b.classList.toggle('sel-a', b.dataset.paidwho==='a' && xPaidWho==='a');
+    b.classList.toggle('sel-b', b.dataset.paidwho==='b' && xPaidWho==='b');
+  });
+}
+document.querySelectorAll('#x_paid_toggle button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{ xPaidWho = btn.dataset.paidwho; updateXPaidToggleUI(); });
+});
+
 const fixedModalOverlay = document.getElementById('fixedModalOverlay');
 document.getElementById('addFixedBtn').addEventListener('click', ()=>{
   document.getElementById('fixedModalTitle').textContent = '定額費用を追加';
   document.getElementById('fixedForm').reset();
   document.getElementById('x_id').value = '';
   document.getElementById('deleteFixedBtn').style.display = 'none';
+  xPaidWho = 'a';
+  updateXPaidToggleUI();
   fixedModalOverlay.classList.add('open');
 });
 fixedModalOverlay.addEventListener('click', e=>{ if(e.target===fixedModalOverlay) fixedModalOverlay.classList.remove('open'); });
@@ -3824,6 +3856,7 @@ document.getElementById('fixedForm').addEventListener('submit', e=>{
     amount: parseFloat(document.getElementById('x_amount').value) || 0,
     a: parseFloat(document.getElementById('x_a').value) || 0,
     b: parseFloat(document.getElementById('x_b').value) || 0,
+    paidWho: xPaidWho,
     payday: parseInt(document.getElementById('x_payday').value) || null,
   };
   if(!obj.name){ alert('名称を入力してください'); return; }
@@ -3863,6 +3896,8 @@ function openFixedEdit(id){
   document.getElementById('x_a').value = f.a;
   document.getElementById('x_b').value = f.b;
   document.getElementById('x_payday').value = f.payday || '';
+  xPaidWho = f.paidWho || 'a';
+  updateXPaidToggleUI();
   document.getElementById('deleteFixedBtn').style.display = 'block';
   fixedModalOverlay.classList.add('open');
 }
@@ -3887,9 +3922,25 @@ function getOrCreatePayment(fixedId, ym){
   let p = DATA.fixedPayments.find(p=>p.fixedId===fixedId && p.yearMonth===ym);
   if(!p){
     const f = DATA.fixed.find(x=>x.id===fixedId);
-    p = { id: uid(), fixedId, yearMonth: ym, status:'due', paidDate:null, a: f?f.a:0, b: f?f.b:0 };
+    const a = f?f.a:0, b = f?f.b:0;
+    const paidWho = (f && f.paidWho) || 'a';
+    p = {
+      id: uid(), fixedId, yearMonth: ym, status:'due', paidDate:null, a, b, settled:false,
+      paidWho, paidA: paidWho==='a' ? a+b : 0, paidB: paidWho==='b' ? a+b : 0,
+    };
     DATA.fixedPayments.push(p);
   }
+  return p;
+}
+
+// 発生済みの月について「先払いしたのはどちら」を後から変更する（精算未確定の間のみ）
+function setFixedPaymentPaidWho(fixedId, ym, who){
+  const p = getOrCreatePayment(fixedId, ym);
+  if(p.settled) return p;
+  const total = (p.a||0) + (p.b||0);
+  p.paidWho = who;
+  p.paidA = who==='a' ? total : 0;
+  p.paidB = who==='b' ? total : 0;
   return p;
 }
 
@@ -3930,6 +3981,9 @@ function renderFixed(){
         <button type="button" class="status-pill due toggle-paid" data-id="${f.id}">状態を確認</button>
         <button type="button" class="icon-btn edit-fixed" data-id="${f.id}">✏️</button>
       </div>
+      <div class="month-row" style="margin-top:4px;">
+        <button type="button" class="status-pill paidwho-pill" data-id="${f.id}"></button>
+      </div>
       <div class="month-history">${histHtml}</div>
     </div>`;
   }).join('');
@@ -3942,6 +3996,18 @@ function renderFixed(){
     const id = item.dataset.id;
     const ymSelect = item.querySelector('.ym');
     const pill = item.querySelector('.toggle-paid');
+    const paidWhoPill = item.querySelector('.paidwho-pill');
+    function refreshPaidWhoPill(){
+      const ym = ymSelect.value;
+      const f = DATA.fixed.find(x=>x.id===id);
+      const p = DATA.fixedPayments.find(p=>p.fixedId===id && p.yearMonth===ym);
+      const who = p ? (p.paidWho||'a') : ((f&&f.paidWho)||'a');
+      const locked = !!(p && p.settled);
+      paidWhoPill.textContent = `先払い：${who==='a'?nameA():nameB()}${locked?'（精算済み）':'（タップで変更）'}`;
+      paidWhoPill.classList.toggle('pill-due', !locked);
+      paidWhoPill.classList.toggle('pill-paid-both', locked);
+      paidWhoPill.disabled = locked;
+    }
     function refreshPill(){
       const ym = ymSelect.value;
       const p = DATA.fixedPayments.find(p=>p.fixedId===id && p.yearMonth===ym);
@@ -3960,7 +4026,17 @@ function renderFixed(){
       }
     }
     refreshPill();
-    ymSelect.addEventListener('change', refreshPill);
+    refreshPaidWhoPill();
+    ymSelect.addEventListener('change', ()=>{ refreshPill(); refreshPaidWhoPill(); });
+    paidWhoPill.addEventListener('click', ()=>{
+      const ym = ymSelect.value;
+      const current = DATA.fixedPayments.find(p=>p.fixedId===id && p.yearMonth===ym);
+      if(current && current.settled) return;
+      const f = DATA.fixed.find(x=>x.id===id);
+      const curWho = current ? (current.paidWho||'a') : ((f&&f.paidWho)||'a');
+      setFixedPaymentPaidWho(id, ym, curWho==='a' ? 'b' : 'a');
+      save(); refreshPaidWhoPill(); renderBalance();
+    });
     pill.addEventListener('click', ()=>{
       const ym = ymSelect.value;
       const p = getOrCreatePayment(id, ym);
@@ -3998,6 +4074,7 @@ document.getElementById('settleForm').addEventListener('submit', e=>{
     direction: document.getElementById('s_direction').value,
     amount: parseFloat(document.getElementById('s_amount').value) || 0,
     memo: document.getElementById('s_memo').value.trim(),
+    reflected: false,
   };
   DATA.settlements.push(s);
   save();
@@ -4064,6 +4141,22 @@ document.getElementById('calcSettlePeriodBtn').addEventListener('click', ()=>{
     return e.date >= start && e.date <= end;
   });
 
+  // 「毎月の定額」で支払い済みだが、まだこの精算フローで精算していない分も対象に含める
+  // （でないとトップの残高表示と精算額がズレる。settled化して二重計上を防ぐ）
+  const startYm = start.slice(0,7), endYm = end.slice(0,7);
+  const fixedTargets = DATA.fixedPayments.filter(p=>{
+    if(p.status!=='paid' || p.settled) return false;
+    return p.yearMonth >= startYm && p.yearMonth <= endYm;
+  });
+  const fixedDiff = fixedTargets.reduce((s,p)=> s + (p.b||0) - (p.paidB||0), 0);
+
+  // 過去に「精算履歴を記録」で手入力した分も、まだ反映していなければ差額に織り込む
+  const settlementTargets = DATA.settlements.filter(s=>{
+    if(s.reflected) return false;
+    return s.date >= start && s.date <= end;
+  });
+  const settlementsAdj = settlementTargets.reduce((s,rec)=> s + (rec.direction==='b_to_a' ? -rec.amount : rec.amount), 0);
+
   const sums = targets.reduce((acc,e)=>{
     acc.total += e.total||0;
     acc.paidA += (e.paidA!=null ? e.paidA : (e.total||0));
@@ -4072,13 +4165,16 @@ document.getElementById('calcSettlePeriodBtn').addEventListener('click', ()=>{
     acc.burdenB += e.b||0;
     return acc;
   }, {total:0, paidA:0, paidB:0, burdenA:0, burdenB:0});
-  const diff = sums.burdenB - sums.paidB;
+  const diff = (sums.burdenB - sums.paidB) + fixedDiff + settlementsAdj;
 
   currentSettlePreview = {
     startDate: start, endDate: end,
     entryIds: targets.map(e=>e.id),
+    fixedIds: fixedTargets.map(p=>p.id),
+    settlementIds: settlementTargets.map(s=>s.id),
     paidA: sums.paidA, paidB: sums.paidB,
     burdenA: sums.burdenA, burdenB: sums.burdenB,
+    fixedDiff, settlementsAdj,
     diff,
   };
 
@@ -4102,6 +4198,17 @@ document.getElementById('calcSettlePeriodBtn').addEventListener('click', ()=>{
   } else {
     diffNote.textContent = `精算額：${nameA()} → ${nameB()}　${yen(Math.abs(diff))}`;
     diffNote.classList.add('to-b');
+  }
+
+  const extraNote = document.getElementById('sp_extra_note');
+  if(fixedTargets.length===0 && settlementTargets.length===0){
+    extraNote.style.display = 'none';
+  } else {
+    const parts = [];
+    if(fixedTargets.length) parts.push(`毎月の定額（支払い済み）${fixedTargets.length}件：${yen(fixedDiff)}`);
+    if(settlementTargets.length) parts.push(`精算履歴の記録${settlementTargets.length}件：${yen(settlementsAdj)}`);
+    extraNote.textContent = `上記の精算額には ${parts.join('／')} を含みます`;
+    extraNote.style.display = 'block';
   }
 
   const reqBtn = document.getElementById('requestSettlePeriodBtn');
@@ -4150,6 +4257,14 @@ document.getElementById('confirmSettlePeriodBtn').addEventListener('click', ()=>
     const e = DATA.entries.find(x=>x.id===id);
     if(e){ e.settled = true; e.settledAt = Date.now(); e.settledRequestId = pending.id; }
   });
+  (pending.fixedIds||[]).forEach(id=>{
+    const p = DATA.fixedPayments.find(x=>x.id===id);
+    if(p) p.settled = true;
+  });
+  (pending.settlementIds||[]).forEach(id=>{
+    const s = DATA.settlements.find(x=>x.id===id);
+    if(s) s.reflected = true;
+  });
   save();
   renderEntries();
   renderBalance();
@@ -4175,8 +4290,11 @@ function renderSettlePeriod(){
     const diffText = Math.abs(pending.diff) < 1
       ? '差額なし'
       : (pending.diff > 0 ? `${nameBEsc()} → ${nameAEsc()}　${yen(pending.diff)}` : `${nameAEsc()} → ${nameBEsc()}　${yen(Math.abs(pending.diff))}`);
+    const extraParts = [];
+    if((pending.fixedIds||[]).length) extraParts.push(`毎月の定額${pending.fixedIds.length}件`);
+    if((pending.settlementIds||[]).length) extraParts.push(`精算履歴${pending.settlementIds.length}件`);
     document.getElementById('pendingSettleInfo').innerHTML = `
-      <p class="small-note">期間：${pending.startDate} 〜 ${pending.endDate}（対象 ${pending.entryIds.length}件）</p>
+      <p class="small-note">期間：${pending.startDate} 〜 ${pending.endDate}（対象 ${pending.entryIds.length}件${extraParts.length? '／'+escapeHtml(extraParts.join('・'))+'を含む':''}）</p>
       <p class="small-note">申請者：${escapeHtml(roleLabel(pending.requestedBy))}</p>
       <div class="diff-note">${diffText}</div>
     `;
