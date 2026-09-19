@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_META: id=shared-payment-saas; name=揉めない家計簿（販売版）; version=v1.11; updated=2026-09-17 -->
+<!-- APP_META: id=shared-payment-saas; name=揉めない家計簿（販売版）; version=v1.12; updated=2026-09-19 -->
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -327,7 +327,6 @@
   }
   .entry-row-wrap:last-child{ border-bottom:none; }
   .entry-row-wrap .entry{ border-bottom:none; padding:0; flex:1; cursor:pointer; }
-  .summary-card .period-select{ margin-bottom:10px; }
   .summary-grid{ display:flex; gap:8px; flex-wrap:wrap; }
   .summary-grid .box{
     flex:1; min-width:90px; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px; text-align:center;
@@ -340,8 +339,13 @@
   .donut-chart{
     width:min(150px,42vw); height:min(150px,42vw); border-radius:50%; position:relative;
     /* 時計回りに「先の色」が右半分・「後の色」が左半分になるため、
-       左の凡例（nameA）と左半分の色を合わせるには、Bの色を先に置く必要がある */
-    background:conic-gradient(var(--donut-b-color,var(--chart-m)) 0% var(--pct-b,50%), var(--donut-a-color,var(--chart-y)) var(--pct-b,50%) 100%);
+       左の凡例（nameA）と左半分の色を合わせるには、Bの色を先に置く必要がある。
+       --seg1〜--seg2の間は「まだ精算していない差額」をハイライト色で別区分する */
+    background:conic-gradient(
+      var(--donut-b-color,var(--chart-m)) 0% var(--seg1,50%),
+      var(--donut-hi-color,var(--accent)) var(--seg1,50%) var(--seg2,50%),
+      var(--donut-a-color,var(--chart-y)) var(--seg2,50%) 100%
+    );
     box-shadow: 0 3px 8px rgba(0,0,0,0.14), inset 0 1px 2px rgba(255,255,255,0.25);
   }
   .donut-chart::before{
@@ -363,6 +367,7 @@
   .legend-dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
   .legend-dot.y{ background:var(--chart-y); }
   .legend-dot.m{ background:var(--chart-m); }
+  .legend-dot.hi{ background:var(--accent); }
   .unsettled-strip{
     margin-top:10px; padding:10px 12px; border-radius:10px; background:#fbe9e1; font-size:12px; color:var(--b); font-weight:600;
     display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;
@@ -788,8 +793,8 @@
     </div>
 
     <div class="card summary-card">
-      <h2>負担額の概要</h2>
-      <select id="summaryPeriod" class="period-select"></select>
+      <h2>精算バランスの概要</h2>
+      <p class="small-note" style="margin-top:-8px;">円グラフ＝実際に支払った額（毎月の定額・精算履歴を含む・記録がある全期間）の比率。<span class="legend-dot hi" style="display:inline-block;vertical-align:middle;"></span>の部分がまだ精算していない差額です</p>
       <div class="summary-chart-wrap">
         <div class="donut-chart" id="summaryDonut">
           <div class="donut-hole">
@@ -3634,26 +3639,9 @@ function renderRecentList(){
   });
 }
 
-/* ---- period summary ---- */
-function populateSummaryPeriods(){
-  const sel = document.getElementById('summaryPeriod');
-  const months = Array.from(new Set(DATA.entries.map(e=>monthKey(e.date)))).filter(Boolean).sort().reverse();
-  const prevVal = sel.value;
-  sel.innerHTML = '<option value="">全期間</option>';
-  months.forEach(m=>{
-    const opt = document.createElement('option');
-    opt.value = m; opt.textContent = m.replace('-','年')+'月';
-    sel.appendChild(opt);
-  });
-  if(prevVal && (months.includes(prevVal) || prevVal==='')) sel.value = prevVal;
-}
-document.getElementById('summaryPeriod').addEventListener('change', renderSummary);
-
+/* ---- summary（常に記録がある全期間。月での絞り込みは廃止） ---- */
 function renderSummary(){
-  populateSummaryPeriods();
-  const period = document.getElementById('summaryPeriod').value;
-  let allEntries = DATA.entries.slice();
-  if(period) allEntries = allEntries.filter(e=>monthKey(e.date)===period);
+  const allEntries = DATA.entries.slice();
 
   const excludedEntries = allEntries.filter(e=>e.excluded);
   const entries = allEntries.filter(e=>!e.excluded);
@@ -3661,25 +3649,43 @@ function renderSummary(){
   const totals = entries.reduce((acc,e)=>{
     acc.total += e.total||0; acc.a += e.a||0; acc.b += e.b||0; return acc;
   }, {total:0,a:0,b:0});
-  const yPct = totals.total>0 ? Math.round((totals.a/totals.total)*100) : 0;
-  const mPct = totals.total>0 ? 100-yPct : 0;
+
+  // 円グラフ＝負担割合をベースに、まだ精算していない差額（バランスバナーと同じcomputeBalance()、
+  // 全期間・精算完了分は除外）をハイライト色で切り出して見せる。
+  // 差額は「どちらか一方の負担ゾーンの、まだ払っていない分」として、境目に隣接する形で切り出す。
+  const bal = computeBalance(); // 正=Bがaに払うべき／負=AがBに払うべき
+  const targetBPct = totals.total>0 ? (totals.b/totals.total*100) : 50;
+  const diffPct = totals.total>0 ? (bal/totals.total*100) : 0;
+  let seg1 = targetBPct - Math.max(diffPct, 0); // B色 → ハイライト色 の境目
+  let seg2 = targetBPct - Math.min(diffPct, 0); // ハイライト色 → A色 の境目
+  seg1 = Math.max(0, Math.min(100, seg1));
+  seg2 = Math.max(0, Math.min(100, seg2));
+
+  const bBase = totals.total * seg1 / 100;
+  const aBase = totals.total * (100 - seg2) / 100;
+  const yPct = Math.round(100 - seg2);
+  const mPct = Math.round(seg1);
 
   document.getElementById('sumTotal').textContent = yen(totals.total);
-  document.getElementById('sumA').textContent = yen(totals.a);
-  document.getElementById('sumB').textContent = yen(totals.b);
+  document.getElementById('sumA').textContent = yen(aBase);
+  document.getElementById('sumB').textContent = yen(bBase);
   document.getElementById('legendAName').textContent = nameA();
   document.getElementById('legendBName').textContent = nameB();
   document.getElementById('sumAPct').textContent = `${yPct}%`;
   document.getElementById('sumBPct').textContent = `${mPct}%`;
   const donut = document.getElementById('summaryDonut');
   if(totals.total > 0){
-    donut.style.setProperty('--pct-b', mPct+'%');
+    donut.style.setProperty('--seg1', seg1+'%');
+    donut.style.setProperty('--seg2', seg2+'%');
     donut.style.removeProperty('--donut-a-color');
     donut.style.removeProperty('--donut-b-color');
+    donut.style.removeProperty('--donut-hi-color');
   } else {
-    donut.style.setProperty('--pct-b', '100%');
+    donut.style.setProperty('--seg1', '100%');
+    donut.style.setProperty('--seg2', '100%');
     donut.style.setProperty('--donut-a-color', 'var(--line)');
     donut.style.setProperty('--donut-b-color', 'var(--line)');
+    donut.style.setProperty('--donut-hi-color', 'var(--line)');
   }
 
   // 未精算 = 確定によって生じた差分（recordedBとの差）の合計（精算完了済みは除外）
